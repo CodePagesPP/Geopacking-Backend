@@ -1,0 +1,4 @@
+package com.backend.geopacking.auth.jwt;
+
+public class JwtAuthenticationFilter {
+}
