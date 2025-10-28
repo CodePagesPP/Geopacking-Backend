@@ -47,35 +47,16 @@ public class SecurityConfig {
                 .cors(withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login","/auth/registerAdmin","/auth/forgot-password","/auth/reset-password","/admin/registerClient","/payments-webhook/**","/plans/listPlans").permitAll()
+                        .requestMatchers("/auth/login","/auth/registerAdmin","/admin/registerClient").permitAll()
                         .requestMatchers("/auth/profile").authenticated()
-                        .requestMatchers(HttpMethod.DELETE,"/client/**").hasAnyAuthority("ADMIN_ACCESS", "CLIENT_ACCESS", "MANAGER_ACCESS")
-                        .requestMatchers("/client/**").hasAnyAuthority("ADMIN_ACCESS", "CLIENT_ACCESS", "MANAGER_ACCESS","STAFF_ACCESS")
-                        .requestMatchers(HttpMethod.DELETE,"/instructor/**", "/class-sessions/**","/rooms/**", "/disciplines/**").hasAnyAuthority("ADMIN_ACCESS", "INSTRUCTOR_ACCESS", "MANAGER_ACCESS")
-                        .requestMatchers("/instructor/**", "/class-sessions/**","/rooms/**", "/disciplines/**").hasAnyAuthority("ADMIN_ACCESS", "INSTRUCTOR_ACCESS", "MANAGER_ACCESS","STAFF_ACCESS", "CLIENT_ACCESS")
                         .requestMatchers(HttpMethod.DELETE,"/admin/**",
                                 "/rol/**",
-                                "/staff/**",
-                                "/manager/**",
-                                "/permission/**",
-                                "/plans/**",
-                                "/payments/current-month-income").hasAnyAuthority("ADMIN_ACCESS", "MANAGER_ACCESS")
-                        .requestMatchers("/excel/**").hasAnyAuthority("ADMIN_ACCESS", "MANAGER_ACCESS")
+                                "/permission/**").hasAnyAuthority("ADMIN_ACCESS")
                         .requestMatchers("/admin/**",
                                 "/rol/**",
-                                "/staff/**",
-                                "/manager/**",
                                 "/permission/**",
-                                "/plans/**",
-                                "/payments/current-month-income",
-                                "/attendance").hasAnyAuthority("ADMIN_ACCESS", "MANAGER_ACCESS","STAFF_ACCESS")
-                        .requestMatchers("/payments/**").hasAuthority("CLIENT_ACCESS")
-                        .requestMatchers("/rooms/**").hasAuthority("ROOM_ACCESS")
-                        .requestMatchers("/disciplines/**").hasAuthority("DISCIPLINE_ACCESS")
+                                "/maquinas/**").hasAnyAuthority("ADMIN_ACCESS")
                         .requestMatchers("/rol/**").hasAuthority("ROLE_ACCESS")
-                        .requestMatchers("/class-sessions/**").hasAuthority("CLASS_SESSION_ACCESS")
-                        .requestMatchers("/excel/**").hasAuthority("EXCEL_ACCESS")
-                        .requestMatchers("/payments/**").hasAuthority("PAYMENT_ACCESS")
                         .anyRequest().authenticated()
                 ).exceptionHandling(ex -> ex
                         .accessDeniedHandler(customAccessDeniedHandler)
