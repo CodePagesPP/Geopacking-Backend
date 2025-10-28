@@ -11,11 +11,13 @@ import java.sql.Timestamp;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
-public class UserDTO {
+public class UserResponseDTO {
     private long id;
-    private String dni;
     private String role;
+    private String name;
+    private String lastName;
+    private String sex;
+    private String dni;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 }

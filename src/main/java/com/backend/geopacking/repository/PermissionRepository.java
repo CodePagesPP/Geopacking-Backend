@@ -1,14 +1,12 @@
 package com.backend.geopacking.repository;
 
-import com.backend.geopacking.model.User;
+import com.backend.geopacking.model.Permission;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
-
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
-    boolean existsByDni(String dni);
-    Optional<User> findByDni(String dni);
+public interface PermissionRepository extends JpaRepository<Permission, Long> {
+    Optional<Permission> findByName(String name);
 }
