@@ -1,21 +1,18 @@
 package com.backend.geopacking.dto;
 
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.sql.Timestamp;
-
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 @Builder
+@AllArgsConstructor
 
-public class UserDTO {
-    private long id;
+public class AdminDTO {
     private String dni;
+    private String password;
     private String role;
-    private Timestamp createdAt;
-    private Timestamp updatedAt;
 }
