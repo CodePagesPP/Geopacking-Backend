@@ -42,9 +42,7 @@ public class MaterialController {
     }
 
     @PutMapping("/{code}")
-    public ResponseEntity<Material> updateMaterial(
-            @PathVariable String code,
-            @RequestBody Material materialDetails) {
+    public ResponseEntity<Material> updateMaterial(@PathVariable String code, @RequestBody Material materialDetails) {
         Material updatedMaterial = materialService.updateMaterial(code, materialDetails);
         return ResponseEntity.ok(updatedMaterial);
     }
