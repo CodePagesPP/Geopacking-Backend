@@ -56,7 +56,8 @@ public class SecurityConfig {
                                 "/rol/**",
                                 "/permission/**",
                                 "/maquinas/**",
-                                "/materials/**").hasAnyAuthority("ADMIN_ACCESS")
+                                "/materials/**",
+                                "/colors/**").hasAnyAuthority("ADMIN_ACCESS")
 
                         .requestMatchers("/rol/**").hasAuthority("ROLE_ACCESS")
                         .anyRequest().authenticated()

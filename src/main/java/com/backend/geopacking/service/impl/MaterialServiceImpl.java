@@ -47,7 +47,7 @@ public class MaterialServiceImpl implements MaterialService {
     @Override
     public Material updateMaterial(String code, Material materialDetails) {
         Material material = materialRepository.findByCode(code)
-                .orElseThrow(() -> new RuntimeException("Material no encontrado con code: " + code));
+                .orElseThrow(() -> new RuntimeException("Material no encontrado con codigo: " + code));
 
         if (materialDetails.getName() != null) {
             material.setName(materialDetails.getName());
@@ -63,7 +63,7 @@ public class MaterialServiceImpl implements MaterialService {
     @Override
     public void deleteMaterial(String code) {
         Material material = materialRepository.findByCode(code)
-                .orElseThrow(() -> new RuntimeException("Material no encontrado con code: " + code));
+                .orElseThrow(() -> new RuntimeException("Material no encontrado con codigo: " + code));
 
         materialRepository.delete(material);
     }
