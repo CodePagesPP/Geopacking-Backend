@@ -49,17 +49,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/login","/auth/registerAdmin","/admin/registerClient").permitAll()
                         .requestMatchers("/auth/profile").authenticated()
-                        .requestMatchers(HttpMethod.DELETE,"/admin/**",
-                                "/rol/**",
-                                "/permission/**").hasAnyAuthority("ADMIN_ACCESS")
+                        .requestMatchers("/maquinas/**","/operadores/**","/scrapp/**").hasAnyAuthority("OPERATOR_ACCESS","ADMIN_ACCESS")
                         .requestMatchers("/admin/**",
                                 "/rol/**",
                                 "/permission/**",
-                                "/maquinas/**",
-                                "/materials/**",
                                 "/colors/**",
-                                "/origins/**").hasAnyAuthority("ADMIN_ACCESS")
-
+                                "/origins/**",
+                                "/reportes/**").hasAnyAuthority("ADMIN_ACCESS")
                         .requestMatchers("/rol/**").hasAuthority("ROLE_ACCESS")
                         .anyRequest().authenticated()
                 ).exceptionHandling(ex -> ex
