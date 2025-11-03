@@ -5,19 +5,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.sql.Timestamp;
-
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-
-public class UserDTO {
-    private long id;
+public class OperadorDTO {
     private String dni;
+    private String password;
     private String name;
     private String lastName;
-    private String role;
-    private Timestamp createdAt;
-    private Timestamp updatedAt;
+    private String sex;
 }

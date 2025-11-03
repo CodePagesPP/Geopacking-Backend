@@ -42,7 +42,6 @@ public class UserServiceImpl implements UserService {
 
         RoleE adminRole = roleRepository.findByName("ADMIN")
                 .orElseThrow(() -> new RuntimeException("Rol ADMIN no existe en la base de datos"));
-        System.out.println("ROL ENCONTRADO: " + adminRole.getName());
 
 
         Admin user = Admin.builder()
@@ -98,18 +97,6 @@ public class UserServiceImpl implements UserService {
                 .role(user.getRole().getName())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
-                .build();
-    }
-
-    private UserResponseDTO mapToDTO(User dto){
-        return UserResponseDTO.builder()
-                .id(dto.getId())
-                .name(dto.getName())
-                .lastName(dto.getLastName())
-                .dni(dto.getDni())
-                .sex(dto.getSex())
-                .role(dto.getRole().getName())
-                .createdAt(Timestamp.valueOf(LocalDateTime.now()))
                 .build();
     }
 }

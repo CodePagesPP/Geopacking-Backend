@@ -23,6 +23,11 @@ public class MaquinaController {
         return ResponseEntity.ok(maquinaService.getAllMaquinas());
     }
 
+    @GetMapping("/activas")
+    public ResponseEntity<List<Maquina>> getMaquinasActivas() {
+        return ResponseEntity.ok(maquinaService.getAllMaquinasActivas());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Maquina> getMaquinaById(@PathVariable Long id) {
 

@@ -25,6 +25,11 @@ public class MaquinaServiceImpl implements MaquinaService {
     }
 
     @Override
+    public List<Maquina> getAllMaquinasActivas() {
+        return maquinaRepository.findByActivo(true);
+    }
+
+    @Override
     public Maquina getMaquinaById(Long id) {
         return maquinaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Maquina no encontrada con id: " + id));

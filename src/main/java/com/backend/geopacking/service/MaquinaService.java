@@ -11,6 +11,7 @@ import java.util.Optional;
 public interface MaquinaService {
 
     List<Maquina> getAllMaquinas();
+    List<Maquina> getAllMaquinasActivas();
     Maquina getMaquinaById(Long id);
 
 

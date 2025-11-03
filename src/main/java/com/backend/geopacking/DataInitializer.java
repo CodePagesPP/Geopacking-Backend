@@ -37,17 +37,13 @@ public class DataInitializer implements CommandLineRunner {
     private void createPermissionsAndRoles() {
         // PERMISOOOOOOOOSSS
         Permission adminPermission = createPermissionIfNotExists("ADMIN_ACCESS");
-        Permission instructorPermission = createPermissionIfNotExists("INSTRUCTOR_ACCESS");
-        Permission staffPermission = createPermissionIfNotExists("STAFF_ACCESS");
-        Permission clientPermission = createPermissionIfNotExists("CLIENT_ACCESS");
-        Permission managerPermission = createPermissionIfNotExists("MANAGER_ACCESS");
+        Permission operatorPermission = createPermissionIfNotExists("OPERATOR_ACCESS");
+        Permission reportPermission = createPermissionIfNotExists("REPORT_ACCESS");
 
         // Roles con sus permisos
         createRoleIfNotExists("ADMIN", "ROL ADMIN", Set.of(adminPermission));
-        createRoleIfNotExists("CLIENT", "ROL CLIENT", Set.of(clientPermission));
-        createRoleIfNotExists("INSTRUCTOR", "ROL INSTRUCTOR", Set.of(instructorPermission));
-        createRoleIfNotExists("STAFF", "ROL STAFF", Set.of(staffPermission));
-        createRoleIfNotExists("MANAGER", "ROL MANAGER", Set.of(managerPermission));
+        createRoleIfNotExists("OPERATOR", "ROL OPERATOR", Set.of(operatorPermission));
+        createRoleIfNotExists("REPORT", "ROL REPORT", Set.of(reportPermission));
 
     }
 
