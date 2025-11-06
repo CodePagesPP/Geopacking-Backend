@@ -8,6 +8,7 @@ import com.backend.geopacking.model.User;
 import com.backend.geopacking.repository.MaquinaRepository;
 import com.backend.geopacking.repository.ScrappRepository;
 import com.backend.geopacking.repository.UserRepository;
+import com.backend.geopacking.service.InventarioService;
 import com.backend.geopacking.service.ScrappService;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfPCell;
@@ -35,6 +36,7 @@ public class ScrappServiceImpl implements ScrappService {
     private final ScrappRepository registroScrappRepository;
     private final MaquinaRepository maquinaRepository;
     private final UserRepository userRepository;
+    private final InventarioService  inventarioService;
 
     private static final Font FONT_TITULO = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, BaseColor.BLACK);
     private static final Font FONT_HEADER = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, BaseColor.WHITE);
@@ -42,6 +44,7 @@ public class ScrappServiceImpl implements ScrappService {
     private static final Font FONT_TOTAL = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, BaseColor.BLACK);
 
     @Override
+    @Transactional
     public Scrapp registrarScrapp(ScrappDTO dto, UserDetails userDetails) {
 
 
@@ -75,8 +78,11 @@ public class ScrappServiceImpl implements ScrappService {
                 .operador(user)
                 .build();
 
+        Scrapp scrappGuardado = registroScrappRepository.save(nuevoRegistro);
 
-        return registroScrappRepository.save(nuevoRegistro);
+        inventarioService.registrarIngresoDesdeScrapp(scrappGuardado);
+
+        return scrappGuardado;
     }
 
     @Override
