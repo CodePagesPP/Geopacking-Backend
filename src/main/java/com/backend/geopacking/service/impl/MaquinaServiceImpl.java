@@ -35,6 +35,12 @@ public class MaquinaServiceImpl implements MaquinaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Maquina no encontrada con id: " + id));
     }
 
+    @Override
+    public List<Maquina> getMolinosActivos() {
+
+        return maquinaRepository.findMolinosActivos(true);
+    }
+
     // --- CREATE ---
 
     @Override

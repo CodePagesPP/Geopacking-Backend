@@ -13,7 +13,7 @@ public interface MaquinaService {
     List<Maquina> getAllMaquinas();
     List<Maquina> getAllMaquinasActivas();
     Maquina getMaquinaById(Long id);
-
+    List<Maquina> getMolinosActivos();
 
     Extrusora createExtrusora(Extrusora extrusora);
     Termoformadora createTermoformadora(Termoformadora termoformadora);
