@@ -28,6 +28,12 @@ public class MaquinaController {
         return ResponseEntity.ok(maquinaService.getAllMaquinasActivas());
     }
 
+    @GetMapping("/molinos-activos")
+    public ResponseEntity<List<Maquina>> getMolinosActivos() {
+        List<Maquina> molinos = maquinaService.getMolinosActivos();
+        return ResponseEntity.ok(molinos);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Maquina> getMaquinaById(@PathVariable Long id) {
 
