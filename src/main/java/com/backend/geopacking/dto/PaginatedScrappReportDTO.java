@@ -12,13 +12,9 @@ import java.util.List;
 @NoArgsConstructor
 public class PaginatedScrappReportDTO {
     private List<Scrapp> registros;
-
-
     private int currentPage;
     private long totalItems;
     private int totalPages;
-
-
     private double totalPesoBruto;
     private double totalPesoNeto;
 }
