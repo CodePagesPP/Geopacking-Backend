@@ -1,6 +1,6 @@
 package com.backend.geopacking.model;
 
-public enum TipoMovimiento {
+public enum Operacion {
     INGRESO,
     SALIDA
 }

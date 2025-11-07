@@ -4,9 +4,11 @@ import com.backend.geopacking.dto.PaginatedScrappReportDTO;
 import com.backend.geopacking.dto.ScrappDTO;
 import com.backend.geopacking.model.Maquina;
 import com.backend.geopacking.model.Scrapp;
+import com.backend.geopacking.model.TypeScrapp;
 import com.backend.geopacking.model.User;
 import com.backend.geopacking.repository.MaquinaRepository;
 import com.backend.geopacking.repository.ScrappRepository;
+import com.backend.geopacking.repository.TypeScrappRepository;
 import com.backend.geopacking.repository.UserRepository;
 import com.backend.geopacking.service.InventarioService;
 import com.backend.geopacking.service.ScrappService;
@@ -37,7 +39,7 @@ public class ScrappServiceImpl implements ScrappService {
     private final MaquinaRepository maquinaRepository;
     private final UserRepository userRepository;
     private final InventarioService  inventarioService;
-
+    private final TypeScrappRepository typeScrappRepository;
     private static final Font FONT_TITULO = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, BaseColor.BLACK);
     private static final Font FONT_HEADER = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, BaseColor.WHITE);
     private static final Font FONT_BODY = FontFactory.getFont(FontFactory.HELVETICA, 9, BaseColor.BLACK);
@@ -46,26 +48,23 @@ public class ScrappServiceImpl implements ScrappService {
     @Override
     @Transactional
     public Scrapp registrarScrapp(ScrappDTO dto, UserDetails userDetails) {
-
-
         User user = userRepository.findByDni(userDetails.getUsername())
                 .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
 
         Maquina maquina = maquinaRepository.findById(dto.getMaquinaId())
                 .orElseThrow(() -> new EntityNotFoundException("Máquina no encontrada"));
 
+        TypeScrapp typeScrapp = typeScrappRepository.findById(dto.getTypeScrappId())
+                .orElseThrow(() -> new EntityNotFoundException("Tipo de Scrapp no encontrado"));
 
         int anioActual = LocalDate.now().getYear();
-
 
         Optional<Scrapp> ultimoRegistro = registroScrappRepository
                 .findFirstByAnioOrderByNumeroBolsonDesc(anioActual);
 
-
         long nuevoNumeroBolson = ultimoRegistro.isPresent()
                 ? ultimoRegistro.get().getNumeroBolson() + 1
                 : 1;
-
 
         Scrapp nuevoRegistro = Scrapp.builder()
                 .numeroBolson(nuevoNumeroBolson)
@@ -76,12 +75,11 @@ public class ScrappServiceImpl implements ScrappService {
                 .turno(obtenerTurnoActual())
                 .maquina(maquina)
                 .operador(user)
+                .typeScrapp(typeScrapp)
                 .build();
 
         Scrapp scrappGuardado = registroScrappRepository.save(nuevoRegistro);
-
         inventarioService.registrarIngresoDesdeScrapp(scrappGuardado);
-
         return scrappGuardado;
     }
 

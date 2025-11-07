@@ -1,5 +1,6 @@
 package com.backend.geopacking.controller;
 
+import com.backend.geopacking.dto.MolinoDTO;
 import com.backend.geopacking.model.*;
 import com.backend.geopacking.service.MaquinaService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,7 +64,7 @@ public class MaquinaController {
     }
 
     @PostMapping("/molino")
-    public ResponseEntity<Molino> createMolino(@RequestBody Molino molino) {
+    public ResponseEntity<Molino> createMolino(@RequestBody MolinoDTO molino) {
         Molino created = maquinaService.createMolino(molino);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
@@ -82,7 +83,7 @@ public class MaquinaController {
     }
 
     @PutMapping("/molino/{id}")
-    public ResponseEntity<Molino> updateMolino(@PathVariable Long id, @RequestBody Molino details) {
+    public ResponseEntity<Molino> updateMolino(@PathVariable Long id, @RequestBody MolinoDTO details) {
         return ResponseEntity.ok(maquinaService.updateMolino(id, details));
     }
 }

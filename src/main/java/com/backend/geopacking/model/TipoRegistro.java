@@ -1,6 +1,6 @@
 package com.backend.geopacking.model;
 
-public enum OrigenMovimiento {
+public enum TipoRegistro {
     SCRAPP,
     MANUAL
 }

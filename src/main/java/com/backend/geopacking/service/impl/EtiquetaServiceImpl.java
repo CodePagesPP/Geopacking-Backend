@@ -1,18 +1,19 @@
 package com.backend.geopacking.service.impl;
 
-import com.backend.geopacking.model.Maquina;
-import com.backend.geopacking.model.Scrapp;
-import com.backend.geopacking.model.User;
+import com.backend.geopacking.model.*;
 import com.backend.geopacking.repository.ScrappRepository;
 import com.backend.geopacking.service.EtiquetaService;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,154 +21,176 @@ public class EtiquetaServiceImpl implements EtiquetaService {
     private final ScrappRepository registroScrappRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public byte[] generarEtiquetaScrapp(Long registroId) throws Exception {
         Scrapp registro = registroScrappRepository.findById(registroId)
                 .orElseThrow(() -> new RuntimeException("Registro de Scrapp no encontrado"));
 
+        // --- Lógica de Datos (sin cambios) ---
         User user = registro.getOperador();
         Maquina maquina = registro.getMaquina();
-
         String operador = user.getName() + " " + user.getLastName();
         String codigoMaquina = maquina.getCodigo();
         String fecha = registro.getFechaCreacion().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
         String turno = registro.getTurno();
         String contenido = "MOLIDO POLIPROPILENO NATURAL";
-
-        // ¡¡AQUÍ ESTÁ LA LÓGICA DINÁMICA!!
         String anioCorto = String.valueOf(registro.getAnio()).substring(2);
         String bolson = registro.getNumeroBolson() + "/" + anioCorto;
-
         double pesoBruto = registro.getPesoBruto();
         double pesoNeto = registro.getPesoNeto();
-        // --- 2. CREACIÓN DEL DOCUMENTO (Tamaño sin cambios, márgenes pequeños) ---
-        float ancho = 160f * 2.83465f; // 160mm a puntos
-        float alto = 100f * 2.83465f;  // 100mm a puntos
+        String origenesStr = "N/A";
+        if (maquina instanceof Molino) {
+            Molino molino = (Molino) maquina;
+            Set<Origen> origenes = molino.getOrigenes();
+            if (origenes != null && !origenes.isEmpty()) {
+                origenesStr = origenes.stream()
+                        .map(Origen::getCode)
+                        .collect(Collectors.joining(", "));
+            }
+        }
+        // --- Fin Lógica de Datos ---
+
+        // --- 1. DEFINICIÓN DEL DOCUMENTO (Sin cambios) ---
+        float ancho = 160f * 2.83465f; // 160mm
+        float alto = 100f * 2.83465f;  // 100mm (Mantenemos el alto original)
         Document document = new Document(new Rectangle(ancho, alto));
-        document.setMargins(10, 10, 10, 10); // Márgenes pequeños
+        document.setMargins(5, 5, 5, 5); // Márgenes pequeños
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PdfWriter writer = PdfWriter.getInstance(document, baos);
         document.open();
 
-        // --- 3. FUENTES ---
-        Font fontTitle = new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD);
-        Font fontLabel = new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD);
-        Font fontValue = new Font(Font.FontFamily.HELVETICA, 10);
-        Font fontContent = new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD);
-        Font fontSmall = new Font(Font.FontFamily.HELVETICA, 9);
-        Font fontSmallBold = new Font(Font.FontFamily.HELVETICA, 9, Font.BOLD);
+        // --- 2. FUENTES (Sin cambios) ---
+        Font fontTitle = new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD);
+        Font fontLabel = new Font(Font.FontFamily.HELVETICA, 9, Font.BOLD);
+        Font fontValue = new Font(Font.FontFamily.HELVETICA, 9);
+        Font fontContent = new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD);
+        Font fontSmall = new Font(Font.FontFamily.HELVETICA, 8);
+        Font fontSmallBold = new Font(Font.FontFamily.HELVETICA, 8, Font.BOLD);
 
-        // --- 4. RECUADRO PRINCIPAL (LA CLAVE) ---
-        // Crearemos una tabla principal que actuará como el contenedor
-        // y su *única celda* tendrá el borde negro.
+        // <-- ¡NUEVA FUENTE! para el texto legible del barcode
+        Font fontBarcodeText = new Font(Font.FontFamily.HELVETICA, 8);
+
+        // --- 3. ESTRUCTURA DE TABLA PRINCIPAL (Sin cambios) ---
         PdfPTable mainContainerTable = new PdfPTable(1);
         mainContainerTable.setWidthPercentage(100);
 
+        // --- CELDA 1: El RECUADRO (Sin cambios) ---
         PdfPCell mainCell = new PdfPCell();
-        mainCell.setBorder(Rectangle.BOX); // ¡El borde principal!
+        mainCell.setBorder(Rectangle.BOX);
         mainCell.setBorderWidth(1.5f);
-        mainCell.setPadding(5f);
+        mainCell.setPadding(3f);
+        mainCell.setPaddingBottom(5f);
 
-
-        // --- 5. TÍTULO (DENTRO DE mainCell) ---
+        // --- TÍTULO (Dentro de mainCell) (Sin cambios) ---
         Paragraph titulo = new Paragraph("MATERIAL PROCESADO EN MOLINO", fontTitle);
         titulo.setAlignment(Element.ALIGN_CENTER);
-        titulo.setSpacingAfter(3f);
+        titulo.setSpacingAfter(2f);
         mainCell.addElement(titulo);
 
-
-        // --- 6. HEADER (Contenido y Aprobación, DENTRO DE mainCell) ---
+        // --- HEADER (Dentro de mainCell) (Sin cambios) ---
         PdfPTable headerTable = new PdfPTable(2);
         headerTable.setWidthPercentage(100);
-        headerTable.setWidths(new float[]{60f, 40f}); // 60% para contenido, 40% para aprobación
+        headerTable.setWidths(new float[]{60f, 40f});
         headerTable.getDefaultCell().setBorder(Rectangle.NO_BORDER);
-
-        // Celda Izquierda (Contenido)
+        // (Celda Izquierda)
         PdfPCell contentTitleCell = new PdfPCell();
         contentTitleCell.setBorder(Rectangle.NO_BORDER);
         contentTitleCell.setVerticalAlignment(Element.ALIGN_TOP);
         contentTitleCell.setPaddingRight(10f);
-
         Paragraph pContenidoLabel = new Paragraph("CONTENIDO:", fontLabel);
         contentTitleCell.addElement(pContenidoLabel);
-
         Paragraph pContenidoValue = new Paragraph(contenido, fontContent);
-        pContenidoValue.setLeading(14f); // Espacio entre líneas
+        pContenidoValue.setLeading(12f);
         contentTitleCell.addElement(pContenidoValue);
-
         headerTable.addCell(contentTitleCell);
-
-        // Celda Derecha (Aprobación)
+        // (Celda Derecha)
         PdfPCell approvalCell = new PdfPCell();
         approvalCell.setBorder(Rectangle.NO_BORDER);
         approvalCell.setVerticalAlignment(Element.ALIGN_TOP);
         approvalCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-
-        // La tabla de aprobación anidada
         approvalCell.addElement(createApprovalTable(fontSmall, fontSmallBold));
         headerTable.addCell(approvalCell);
-
         mainCell.addElement(headerTable);
 
-
-        // --- 7. DATA BLOCK (DENTRO DE mainCell) ---
-        // Esta es la tabla de 4 columnas (Label, Value, Label, Value)
+        // --- DATA BLOCK (Dentro de mainCell) (Sin cambios) ---
         PdfPTable dataTable = new PdfPTable(4);
         dataTable.setWidthPercentage(100);
         dataTable.setWidths(new float[]{30f, 20f, 30f, 20f});
         dataTable.getDefaultCell().setBorder(Rectangle.NO_BORDER);
-        dataTable.setSpacingBefore(8f); // Espacio después del bloque de contenido
+        dataTable.setSpacingBefore(4f);
+        // (Fila 1)
         agregarFilaDatos(dataTable, "BOLSON N°:", bolson, fontLabel, fontValue,
                 "MAQUINA:", codigoMaquina, fontValue, fontValue);
-
-        // Fila 2: PESO BRUTO y FECHA/TURNO
+        // (Fila 2)
+        PdfPCell origenLabelCell = new PdfPCell(new Paragraph("ORIGEN:", fontLabel));
+        origenLabelCell.setBorder(Rectangle.NO_BORDER);
+        origenLabelCell.setPaddingTop(1f);
+        origenLabelCell.setPaddingBottom(1f);
+        dataTable.addCell(origenLabelCell);
+        PdfPCell origenValueCell = new PdfPCell(new Paragraph(origenesStr, fontValue));
+        origenValueCell.setBorder(Rectangle.NO_BORDER);
+        origenValueCell.setColspan(3);
+        origenValueCell.setPaddingTop(1f);
+        origenValueCell.setPaddingBottom(1f);
+        dataTable.addCell(origenValueCell);
+        // (Fila 3)
         agregarFilaDatos(dataTable, "PESO BRUTO (Kg.):", String.valueOf(pesoBruto), fontValue, fontValue,
                 "FECHA Y TURNO:", fecha + " - " + turno, fontValue, fontValue);
-
-        // Fila 3: PESO NETO y OPERADOR
+        // (Fila 4)
         agregarFilaDatos(dataTable, "PESO NETO (Kg.):", String.valueOf(pesoNeto), fontLabel, fontValue,
                 "OPERADOR:", operador, fontValue, fontValue);
-
         mainCell.addElement(dataTable);
-        Paragraph pObs = new Paragraph("Observaciones:", fontValue);
-        pObs.setSpacingBefore(5f);
-        mainCell.addElement(pObs);
 
-        PdfPCell obsBoxCell = new PdfPCell(new Phrase(" ")); // Celda vacía para el recuadro
+        // --- OBSERVACIONES (Dentro de mainCell) (Sin cambios) ---
+        Paragraph pObs = new Paragraph("Observaciones:", fontValue);
+        pObs.setSpacingBefore(3f);
+        mainCell.addElement(pObs);
+        PdfPCell obsBoxCell = new PdfPCell(new Phrase(" "));
         obsBoxCell.setBorder(Rectangle.BOX);
         obsBoxCell.setBorderWidth(0.5f);
-        obsBoxCell.setFixedHeight(20f);
-
+        obsBoxCell.setFixedHeight(15f);
         PdfPTable obsTable = new PdfPTable(1);
         obsTable.setWidthPercentage(100);
         obsTable.addCell(obsBoxCell);
-
         mainCell.addElement(obsTable);
 
 
-        // --- 9. AÑADIR LA CELDA PRINCIPAL AL DOCUMENTO ---
         mainContainerTable.addCell(mainCell);
-        document.add(mainContainerTable);
 
 
-        // --- 10. CÓDIGO DE BARRAS (FUERA DEL RECUADRO) ---
-        document.add(new Paragraph("\n")); // Espacio entre el recuadro y el código de barras
         PdfContentByte cb = writer.getDirectContent();
         String barcodeText = "MOLPP-" + bolson.replace("/", "-") + "-" + String.valueOf((int)pesoNeto);
 
         Barcode128 barcode = new Barcode128();
         barcode.setCode(barcodeText.trim());
         barcode.setCodeType(Barcode128.CODE_A);
-        barcode.setBarHeight(30f);
+
+
+        barcode.setBarHeight(40f);
         barcode.setX(0.75f);
+
+
 
         Image barcodeImage = barcode.createImageWithBarcode(cb, null, null);
         barcodeImage.setAlignment(Element.ALIGN_CENTER);
-        document.add(barcodeImage);
 
-        Paragraph barcodeLabel = new Paragraph("*" + barcodeText + "*", fontValue);
-        barcodeLabel.setAlignment(Element.ALIGN_CENTER);
-        document.add(barcodeLabel);
+        barcodeImage.scalePercent(90f);
+
+
+        PdfPCell barcodeCell = new PdfPCell();
+        barcodeCell.setBorder(Rectangle.NO_BORDER);
+        barcodeCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        barcodeCell.setPaddingTop(20f);
+
+        barcodeCell.addElement(barcodeImage);
+
+
+        mainContainerTable.addCell(barcodeCell);
+
+
+        document.add(mainContainerTable);
+
         document.close();
         return baos.toByteArray();
     }

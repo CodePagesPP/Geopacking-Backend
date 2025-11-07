@@ -1,10 +1,11 @@
 package com.backend.geopacking.dto;
 
-import com.backend.geopacking.model.TipoMovimiento;
+import com.backend.geopacking.model.Operacion;
 import lombok.Data;
 
 @Data
 public class InventarioManualDTO {
-    private TipoMovimiento tipo;
+    private Operacion operacion;
     private Double cantidad;
+    private Long typeScrappId;
 }

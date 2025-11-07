@@ -1,17 +1,28 @@
 package com.backend.geopacking.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.*;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "molinos")
 @Data
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = true, exclude = "origenes")
+@ToString(callSuper = true, exclude = "origenes")
 @NoArgsConstructor
 @SuperBuilder
 public class Molino extends Maquina {
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "molino_origenes",
+            joinColumns = @JoinColumn(name = "molino_id"),
+            inverseJoinColumns = @JoinColumn(name = "origen_id")
+    )
+    @Builder.Default
+    @JsonManagedReference
+    private Set<Origen> origenes = new HashSet<>();
 }
