@@ -25,11 +25,11 @@ public class InventarioMovimiento {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TipoMovimiento tipo;
+    private Operacion operacion;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private OrigenMovimiento origen;
+    private TipoRegistro tipoRegistro;
 
     @Column(nullable = false)
     private Double cantidad; // Siempre positivo, el tipo define si suma o resta
@@ -41,12 +41,16 @@ public class InventarioMovimiento {
     private LocalDateTime fechaRegistro;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "scrap_id")
+    @JoinColumn(name = "scrap_id", nullable = true)
     private Scrapp scrappReferencia;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "registrado_por_id", nullable = false)
     private User registradoPor;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "type_scrapp_id", nullable = false)
+    private TypeScrapp typeScrapp;
 
     @PrePersist
     protected void onCreate() {

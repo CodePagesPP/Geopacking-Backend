@@ -31,12 +31,11 @@ public class InventarioController {
     private final UserRepository userRepository;
 
     @PostMapping("/manual")
-    @PreAuthorize("hasAuthority('ADMIN_ACCESS')")
     public ResponseEntity<Void> registrarMovimientoManual(@RequestBody InventarioManualDTO dto, @AuthenticationPrincipal UserDetails userDetails) {
         User adminUser = userRepository.findByDni(userDetails.getUsername())
                 .orElseThrow(() -> new EntityNotFoundException("Usuario administrador no encontrado"));
 
-        inventarioService.registrarMovimientoManual(dto.getTipo(), dto.getCantidad(), adminUser);
+        inventarioService.registrarMovimientoManual(dto.getTypeScrappId(),dto.getOperacion(), dto.getCantidad(), adminUser);
 
         return ResponseEntity.ok().build();
     }
@@ -46,11 +45,12 @@ public class InventarioController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) Long typeScrappId) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "fechaRegistro"));
 
-        Page<InventarioMovimientoDTO> historial = inventarioService.listarMovimientos(fechaInicio, fechaFin, pageable);
+        Page<InventarioMovimientoDTO> historial = inventarioService.listarMovimientos(fechaInicio, fechaFin, typeScrappId,pageable);
         return ResponseEntity.ok(historial);
     }
 

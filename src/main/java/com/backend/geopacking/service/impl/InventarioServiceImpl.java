@@ -3,13 +3,14 @@ package com.backend.geopacking.service.impl;
 import com.backend.geopacking.dto.InventarioMovimientoDTO;
 import com.backend.geopacking.model.*;
 import com.backend.geopacking.repository.InventarioMovimientoRepository;
+import com.backend.geopacking.repository.TypeScrappRepository;
 import com.backend.geopacking.service.InventarioService;
-import jakarta.transaction.Transactional;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.Optional;
@@ -19,7 +20,7 @@ import java.util.Optional;
 public class InventarioServiceImpl implements InventarioService {
 
     private final InventarioMovimientoRepository inventarioRepository;
-
+    private final TypeScrappRepository typeScrappRepository;
     @Override
     @Transactional
     public void registrarIngresoDesdeScrapp(Scrapp scrapp) {
@@ -27,12 +28,13 @@ public class InventarioServiceImpl implements InventarioService {
 
         InventarioMovimiento movimiento = InventarioMovimiento.builder()
                 .codigoMovimiento(codigo)
-                .tipo(TipoMovimiento.INGRESO)
-                .origen(OrigenMovimiento.SCRAPP)
+                .operacion(Operacion.INGRESO)
+                .tipoRegistro(TipoRegistro.SCRAPP)
                 .cantidad(scrapp.getPesoNeto()) // Usamos Peso Neto para inventario
                 .fecha(scrapp.getFechaCreacion())
                 .scrappReferencia(scrapp)
                 .registradoPor(scrapp.getOperador())
+                .typeScrapp(scrapp.getTypeScrapp())
                 .build();
 
         inventarioRepository.save(movimiento);
@@ -40,12 +42,14 @@ public class InventarioServiceImpl implements InventarioService {
 
     @Override
     @Transactional
-    public void registrarMovimientoManual(TipoMovimiento tipo, Double cantidad, User adminUser) {
+    public void registrarMovimientoManual(Long typeScrappId,Operacion tipo, Double cantidad, User adminUser) {
         int anioActual = LocalDate.now().getYear();
 
+        TypeScrapp typeScrapp = typeScrappRepository.findById(typeScrappId)
+                .orElseThrow(() -> new EntityNotFoundException("TypeScrapp no encontrado"));
         // 1. Obtener el último secuencial para este tipo y año
         Optional<InventarioMovimiento> ultimoMovimiento = inventarioRepository
-                .findUltimoManualPorTipoAnio(tipo, anioActual);
+                .findUltimoManualPorTipoAnioYTipoScrapp(tipo,typeScrapp, anioActual);
 
         long nuevoSecuencial = 1;
         if (ultimoMovimiento.isPresent()) {
@@ -64,30 +68,33 @@ public class InventarioServiceImpl implements InventarioService {
         }
 
         //Construir el nuevo código
-        String prefijo = (tipo == TipoMovimiento.INGRESO) ? "IN" : "SA";
+        String prefijo = (tipo == Operacion.INGRESO) ? "IN" : "SA";
         String nuevoCodigo = String.format("%s-MOLPP-%d/%d", prefijo, nuevoSecuencial, anioActual);
 
         //Guardar
         InventarioMovimiento movimiento = InventarioMovimiento.builder()
                 .codigoMovimiento(nuevoCodigo)
-                .tipo(tipo)
-                .origen(OrigenMovimiento.MANUAL)
+                .operacion(tipo)
+                .tipoRegistro(TipoRegistro.MANUAL)
                 .cantidad(cantidad)
                 .fecha(LocalDate.now())
                 .registradoPor(adminUser)
+                .typeScrapp(typeScrapp)
+                .scrappReferencia(null)
                 .build();
 
         inventarioRepository.save(movimiento);
     }
 
     @Override
-    public Page<InventarioMovimientoDTO> listarMovimientos(LocalDate inicio, LocalDate fin, Pageable pageable) {
-        Page<InventarioMovimiento> paginaEntidades;
-        if (inicio != null && fin != null) {
-            paginaEntidades = inventarioRepository.findAllByFechaBetween(inicio, fin, pageable);
-        } else {
-            paginaEntidades = inventarioRepository.findAll(pageable);
-        }
+    @Transactional(readOnly = true)
+    public Page<InventarioMovimientoDTO> listarMovimientos(LocalDate inicio, LocalDate fin, Long typeScrappId,Pageable pageable) {
+        Page<InventarioMovimiento> paginaEntidades = inventarioRepository.findWithFilters(
+                inicio,
+                fin,
+                typeScrappId,
+                pageable
+        );
 
         // Mapear de Entidad a DTO
         return paginaEntidades.map(this::mapToDTO);
@@ -97,8 +104,8 @@ public class InventarioServiceImpl implements InventarioService {
         InventarioMovimientoDTO dto = new InventarioMovimientoDTO();
         dto.setId(entidad.getId());
         dto.setCodigoMovimiento(entidad.getCodigoMovimiento());
-        dto.setTipo(entidad.getTipo());
-        dto.setOrigen(entidad.getOrigen());
+        dto.setOperacion(entidad.getOperacion());
+        dto.setTipoRegistro(entidad.getTipoRegistro());
         dto.setCantidad(entidad.getCantidad());
         dto.setFecha(entidad.getFecha());
         dto.setFechaRegistro(entidad.getFechaRegistro());
@@ -107,6 +114,11 @@ public class InventarioServiceImpl implements InventarioService {
         if (entidad.getRegistradoPor() != null) {
             dto.setRegistradoPorNombre(entidad.getRegistradoPor().getName());
             // Asegúrate de que User tenga un campo 'name' o usa el que corresponda
+        }
+
+        if (entidad.getTypeScrapp() != null) {
+            // Asumo que TypeScrapp (que extiende MCO) tiene 'name'
+            dto.setTypeScrappNombre(entidad.getTypeScrapp().getName());
         }
 
         return dto;

@@ -1,7 +1,7 @@
 package com.backend.geopacking.dto;
 
-import com.backend.geopacking.model.OrigenMovimiento;
-import com.backend.geopacking.model.TipoMovimiento;
+import com.backend.geopacking.model.TipoRegistro;
+import com.backend.geopacking.model.Operacion;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -11,10 +11,11 @@ import java.time.LocalDateTime;
 public class InventarioMovimientoDTO {
     private Long id;
     private String codigoMovimiento;
-    private TipoMovimiento tipo;
-    private OrigenMovimiento origen;
+    private Operacion operacion;
+    private TipoRegistro tipoRegistro;
     private Double cantidad;
     private LocalDate fecha;
     private LocalDateTime fechaRegistro;
+    private String TypeScrappNombre;
     private String registradoPorNombre;
 }

@@ -49,7 +49,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/login","/auth/registerAdmin","/admin/registerClient").permitAll()
                         .requestMatchers("/auth/profile").authenticated()
-                        .requestMatchers("/maquinas/**","/operadores/**","/scrapp/**").hasAnyAuthority("OPERATOR_ACCESS","ADMIN_ACCESS")
+                        .requestMatchers("/maquinas/**","/operadores/**","/scrapp/**","/typescrapp/**").hasAnyAuthority("OPERATOR_ACCESS","ADMIN_ACCESS")
                         .requestMatchers("/admin/**",
                                 "/rol/**",
                                 "/permission/**",

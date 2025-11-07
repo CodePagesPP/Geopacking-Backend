@@ -45,4 +45,8 @@ public class Scrapp {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "operador_id", nullable = false)
     private User operador;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "type_scrapp_id", nullable = false)
+    private TypeScrapp typeScrapp;
 }

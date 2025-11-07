@@ -7,4 +7,5 @@ public class ScrappDTO {
     private Long maquinaId;
     private Double pesoBruto;
     private Double pesoNeto;
+    private Long typeScrappId;
 }

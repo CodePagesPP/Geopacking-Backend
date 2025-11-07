@@ -1,14 +1,18 @@
 package com.backend.geopacking.service.impl;
 
+import com.backend.geopacking.dto.MolinoDTO;
 import com.backend.geopacking.exceptions.ResourceNotFoundException;
 import com.backend.geopacking.model.*;
 import com.backend.geopacking.repository.MaquinaRepository;
+import com.backend.geopacking.repository.OrigenRepository;
 import com.backend.geopacking.service.MaquinaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Transactional
@@ -16,7 +20,8 @@ public class MaquinaServiceImpl implements MaquinaService {
 
     @Autowired
     private MaquinaRepository maquinaRepository;
-
+    @Autowired
+    private OrigenRepository origenRepository;
     // --- READ ---
 
     @Override
@@ -54,7 +59,23 @@ public class MaquinaServiceImpl implements MaquinaService {
     }
 
     @Override
-    public Molino createMolino(Molino molino) {
+    public Molino createMolino(MolinoDTO dto) { // <-- Acepta DTO
+        // 1. Buscar los orígenes reales desde la DB
+        Set<Origen> managedOrigenes = new HashSet<>();
+        if (dto.getOrigenIds() != null && !dto.getOrigenIds().isEmpty()) {
+            managedOrigenes = new HashSet<>(origenRepository.findAllById(dto.getOrigenIds()));
+        }
+
+        // 2. Construir el nuevo Molino
+        Molino molino = Molino.builder()
+                .codigo(dto.getCodigo())
+                .marca(dto.getMarca())
+                .modelo(dto.getModelo())
+                .activo(dto.isActivo())
+                .origenes(managedOrigenes)
+                .build();
+
+        // 3. Guardar
         return maquinaRepository.save(molino);
     }
 
@@ -99,19 +120,26 @@ public class MaquinaServiceImpl implements MaquinaService {
     }
 
     @Override
-    public Molino updateMolino(Long id, Molino details) {
-        Maquina maquina = getMaquinaById(id);
+    public Molino updateMolino(Long id, MolinoDTO dto) { // <-- Acepta DTO
+        // 1. Encontrar el molino existente
+        Molino existing = (Molino) maquinaRepository.findById(id)
+                .filter(m -> m instanceof Molino)
+                .orElseThrow(() -> new IllegalArgumentException("Molino con id " + id + " no encontrado."));
 
-        if (!(maquina instanceof Molino)) {
-            throw new IllegalArgumentException("La máquina con id " + id + " no es un Molino.");
+        // 2. Actualizar campos base
+        existing.setCodigo(dto.getCodigo());
+        existing.setMarca(dto.getMarca());
+        existing.setModelo(dto.getModelo());
+        existing.setActivo(dto.isActivo());
+
+        // 3. Actualizar la lista de orígenes
+        Set<Origen> managedOrigenes = new HashSet<>();
+        if (dto.getOrigenIds() != null && !dto.getOrigenIds().isEmpty()) {
+            managedOrigenes = new HashSet<>(origenRepository.findAllById(dto.getOrigenIds()));
         }
+        existing.setOrigenes(managedOrigenes);
 
-        Molino existing = (Molino) maquina;
-        existing.setCodigo(details.getCodigo());
-        existing.setMarca(details.getMarca());
-        existing.setModelo(details.getModelo());
-        existing.setActivo(details.isActivo());
-
+        // 4. Guardar
         return maquinaRepository.save(existing);
     }
 
