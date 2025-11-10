@@ -7,5 +7,8 @@ import lombok.Data;
 public class InventarioManualDTO {
     private Operacion operacion;
     private Double cantidad;
+    private Long motivoId;
+    private String nuevoMotivo;
+    private String nota;
     private Long typeScrappId;
 }
