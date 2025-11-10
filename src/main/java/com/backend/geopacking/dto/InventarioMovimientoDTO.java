@@ -18,4 +18,6 @@ public class InventarioMovimientoDTO {
     private LocalDateTime fechaRegistro;
     private String TypeScrappNombre;
     private String registradoPorNombre;
+    private String motivoNombre;
+    private String nota;
 }

@@ -4,7 +4,9 @@ import com.backend.geopacking.dto.InventarioManualDTO;
 import com.backend.geopacking.dto.InventarioMovimientoDTO;
 import com.backend.geopacking.dto.InventarioStockDTO;
 import com.backend.geopacking.model.InventarioMovimiento;
+import com.backend.geopacking.model.Motivo;
 import com.backend.geopacking.model.User;
+import com.backend.geopacking.repository.MotivoRepository;
 import com.backend.geopacking.repository.UserRepository;
 import com.backend.geopacking.service.InventarioService;
 import jakarta.persistence.EntityNotFoundException;
@@ -21,6 +23,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/inventario")
@@ -29,14 +32,17 @@ public class InventarioController {
 
     private final InventarioService inventarioService;
     private final UserRepository userRepository;
+    private final MotivoRepository motivoRepository;
 
     @PostMapping("/manual")
-    public ResponseEntity<Void> registrarMovimientoManual(@RequestBody InventarioManualDTO dto, @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<Void> registrarMovimientoManual(
+            @RequestBody InventarioManualDTO dto,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
         User adminUser = userRepository.findByDni(userDetails.getUsername())
                 .orElseThrow(() -> new EntityNotFoundException("Usuario administrador no encontrado"));
 
-        inventarioService.registrarMovimientoManual(dto.getTypeScrappId(),dto.getOperacion(), dto.getCantidad(), adminUser);
-
+        inventarioService.registrarMovimientoManual(dto, adminUser);
         return ResponseEntity.ok().build();
     }
 
@@ -58,5 +64,10 @@ public class InventarioController {
     public ResponseEntity<InventarioStockDTO> obtenerStockActual() {
         Double stock = inventarioService.obtenerStockActual();
         return ResponseEntity.ok(new InventarioStockDTO(stock));
+    }
+
+    @GetMapping("/motivos")
+    public ResponseEntity<List<Motivo>> listarMotivos() {
+        return ResponseEntity.ok(motivoRepository.findAll());
     }
 }

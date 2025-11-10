@@ -59,4 +59,11 @@ public class InventarioMovimiento {
             this.fecha = LocalDate.now();
         }
     }
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "motivo_id")
+    private Motivo motivo;
+
+    @Column(columnDefinition = "TEXT")
+    private String nota;
 }

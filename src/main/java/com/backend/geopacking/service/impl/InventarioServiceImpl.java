@@ -1,8 +1,10 @@
 package com.backend.geopacking.service.impl;
 
+import com.backend.geopacking.dto.InventarioManualDTO;
 import com.backend.geopacking.dto.InventarioMovimientoDTO;
 import com.backend.geopacking.model.*;
 import com.backend.geopacking.repository.InventarioMovimientoRepository;
+import com.backend.geopacking.repository.MotivoRepository;
 import com.backend.geopacking.repository.TypeScrappRepository;
 import com.backend.geopacking.service.InventarioService;
 import jakarta.persistence.EntityNotFoundException;
@@ -21,6 +23,8 @@ public class InventarioServiceImpl implements InventarioService {
 
     private final InventarioMovimientoRepository inventarioRepository;
     private final TypeScrappRepository typeScrappRepository;
+    private final MotivoRepository motivoRepository;
+
     @Override
     @Transactional
     public void registrarIngresoDesdeScrapp(Scrapp scrapp) {
@@ -42,48 +46,51 @@ public class InventarioServiceImpl implements InventarioService {
 
     @Override
     @Transactional
-    public void registrarMovimientoManual(Long typeScrappId,Operacion tipo, Double cantidad, User adminUser) {
+    public void registrarMovimientoManual(InventarioManualDTO dto, User adminUser) {
         int anioActual = LocalDate.now().getYear();
 
-        TypeScrapp typeScrapp = typeScrappRepository.findById(typeScrappId)
+        TypeScrapp typeScrapp = typeScrappRepository.findById(dto.getTypeScrappId())
                 .orElseThrow(() -> new EntityNotFoundException("TypeScrapp no encontrado"));
-        // 1. Obtener el último secuencial para este tipo y año
-        Optional<InventarioMovimiento> ultimoMovimiento = inventarioRepository
-                .findUltimoManualPorTipoAnioYTipoScrapp(tipo,typeScrapp, anioActual);
 
+        Motivo motivo = null;
+        if (dto.getNuevoMotivo() != null && !dto.getNuevoMotivo().isBlank()) {
+            String nombre = dto.getNuevoMotivo().trim();
+            motivo = motivoRepository.findByNombreIgnoreCase(nombre)
+                    .orElseGet(() -> motivoRepository.save(Motivo.builder().nombre(nombre).build()));
+        } else if (dto.getMotivoId() != null) {
+            motivo = motivoRepository.findById(dto.getMotivoId())
+                    .orElseThrow(() -> new EntityNotFoundException("Motivo no encontrado"));
+        }
+
+        Optional<InventarioMovimiento> ultimo = inventarioRepository
+                .findUltimoManualPorTipoAnioYTipoScrapp(dto.getOperacion(), typeScrapp, anioActual);
         long nuevoSecuencial = 1;
-        if (ultimoMovimiento.isPresent()) {
-            String ultimoCodigo = ultimoMovimiento.get().getCodigoMovimiento();
-            // Extraer el número del código. Ej: IN-MOLPP-5/2025 -> extraer 5
-            // Formato esperado: PREFIJO-SEQ/AÑO
+        if (ultimo.isPresent()) {
             try {
-                String[] partes = ultimoCodigo.split("-"); // [IN, MOLPP, 5/2025]
-                String parteSeqAnio = partes[2]; // 5/2025
-                String seqStr = parteSeqAnio.split("/")[0]; // 5
+                String[] partes = ultimo.get().getCodigoMovimiento().split("-");
+                String seqStr = partes[2].split("/")[0];
                 nuevoSecuencial = Long.parseLong(seqStr) + 1;
             } catch (Exception e) {
-                // Fallback si el formato falla por alguna razón rara
                 nuevoSecuencial = inventarioRepository.count() + 1;
             }
         }
 
-        //Construir el nuevo código
-        String prefijo = (tipo == Operacion.INGRESO) ? "IN" : "SA";
-        String nuevoCodigo = String.format("%s-MOLPP-%d/%d", prefijo, nuevoSecuencial, anioActual);
+        String prefijo = (dto.getOperacion() == Operacion.INGRESO) ? "IN" : "SA";
+        String codigo = String.format("%s-MOLPP-%d/%d", prefijo, nuevoSecuencial, anioActual);
 
-        //Guardar
-        InventarioMovimiento movimiento = InventarioMovimiento.builder()
-                .codigoMovimiento(nuevoCodigo)
-                .operacion(tipo)
+        InventarioMovimiento mov = InventarioMovimiento.builder()
+                .codigoMovimiento(codigo)
+                .operacion(dto.getOperacion())
                 .tipoRegistro(TipoRegistro.MANUAL)
-                .cantidad(cantidad)
+                .cantidad(dto.getCantidad())
                 .fecha(LocalDate.now())
                 .registradoPor(adminUser)
                 .typeScrapp(typeScrapp)
-                .scrappReferencia(null)
+                .motivo(motivo)
+                .nota(dto.getNota())
                 .build();
 
-        inventarioRepository.save(movimiento);
+        inventarioRepository.save(mov);
     }
 
     @Override
@@ -109,16 +116,18 @@ public class InventarioServiceImpl implements InventarioService {
         dto.setCantidad(entidad.getCantidad());
         dto.setFecha(entidad.getFecha());
         dto.setFechaRegistro(entidad.getFechaRegistro());
+        dto.setNota(entidad.getNota());
 
-        // Aquí manejas la relación Lazy de forma segura
         if (entidad.getRegistradoPor() != null) {
             dto.setRegistradoPorNombre(entidad.getRegistradoPor().getName());
-            // Asegúrate de que User tenga un campo 'name' o usa el que corresponda
         }
 
         if (entidad.getTypeScrapp() != null) {
-            // Asumo que TypeScrapp (que extiende MCO) tiene 'name'
             dto.setTypeScrappNombre(entidad.getTypeScrapp().getName());
+        }
+
+        if (entidad.getMotivo() != null) {
+            dto.setMotivoNombre(entidad.getMotivo().getNombre());
         }
 
         return dto;
