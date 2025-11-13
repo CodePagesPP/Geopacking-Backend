@@ -9,6 +9,7 @@ import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +29,21 @@ public class ClienteServiceImpl implements ClienteService {
             return clienteRepository.findByFiltro(filtro, pageable);
         } else {
             return clienteRepository.findAll(pageable);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Cliente> getClientesParaExportar(String filtro) {
+
+        Sort sort = Sort.by("nombre");
+
+        if (filtro != null && !filtro.trim().isEmpty()) {
+
+            return clienteRepository.findByFiltro(filtro, sort);
+        } else {
+
+            return clienteRepository.findAll(sort);
         }
     }
 
