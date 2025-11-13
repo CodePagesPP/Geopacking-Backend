@@ -1,7 +1,10 @@
 package com.backend.geopacking.controller;
 
+import com.backend.geopacking.dto.ProductoDTO;
 import com.backend.geopacking.model.ProductoTF;
 import com.backend.geopacking.service.ProductoTFService;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,12 +14,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/prodTF")
+@AllArgsConstructor
 public class ProductoTFController {
 
     private final ProductoTFService productoTFService;
 
-    @Autowired
-    public ProductoTFController(ProductoTFService productoTFService) { this.productoTFService = productoTFService; }
 
     @GetMapping
     public List<ProductoTF> getAll() { return productoTFService.getAllTf(); }
@@ -32,14 +34,14 @@ public class ProductoTFController {
     }
 
     @PostMapping
-    public ResponseEntity<ProductoTF> createTf(@RequestBody ProductoTF productoTF){
-        ProductoTF createdProductoTF = productoTFService.createTf(productoTF);
+    public ResponseEntity<ProductoTF> createTf(@Valid @RequestBody ProductoDTO dto){
+        ProductoTF createdProductoTF = productoTFService.createTf(dto);
         return new  ResponseEntity<>(createdProductoTF, HttpStatus.CREATED);
     }
 
     @PutMapping("/{code}")
-    public ResponseEntity<ProductoTF> updateTf(@PathVariable String code, @RequestBody ProductoTF productoTF){
-        ProductoTF updatedTF = productoTFService.updateTf(code, productoTF);
+    public ResponseEntity<ProductoTF> updateTf(@PathVariable String code, @Valid @RequestBody ProductoDTO dto){
+        ProductoTF updatedTF = productoTFService.updateTf(code, dto);
         return ResponseEntity.ok(updatedTF);
     }
 

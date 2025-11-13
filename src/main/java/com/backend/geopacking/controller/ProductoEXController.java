@@ -1,7 +1,10 @@
 package com.backend.geopacking.controller;
 
+import com.backend.geopacking.dto.ProductoDTO;
 import com.backend.geopacking.model.ProductoEX;
 import com.backend.geopacking.service.ProductoEXService;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,13 +14,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/prodEX")
+@AllArgsConstructor
 public class ProductoEXController {
 
     private final ProductoEXService productoEXService;
-
-    @Autowired
-    public ProductoEXController(ProductoEXService productoEXService) { this.productoEXService = productoEXService; }
-
     @GetMapping
     public List<ProductoEX> getAll() { return productoEXService.getAllEx(); }
 
@@ -32,15 +32,15 @@ public class ProductoEXController {
     }
 
     @PostMapping()
-    public ResponseEntity<ProductoEX> create(@RequestBody ProductoEX productoEX){
-        ProductoEX Ex = productoEXService.createEX(productoEX);
-            return new ResponseEntity<>(Ex, HttpStatus.CREATED);
+    public ResponseEntity<ProductoEX> create(@Valid @RequestBody ProductoDTO dto){
+        ProductoEX ex = productoEXService.createEX(dto);
+        return new ResponseEntity<>(ex, HttpStatus.CREATED);
     }
 
     @PutMapping("/{code}")
-    public ResponseEntity<ProductoEX> update(@PathVariable String code, @RequestBody ProductoEX productoEX){
-        ProductoEX ExUpdated = productoEXService.updateEX(productoEX, code);
-        return ResponseEntity.ok(ExUpdated);
+    public ResponseEntity<ProductoEX> update(@PathVariable String code, @Valid @RequestBody ProductoDTO dto){
+        ProductoEX exUpdated = productoEXService.updateEX(code, dto);
+        return ResponseEntity.ok(exUpdated);
     }
 
     @DeleteMapping("/{code}")
