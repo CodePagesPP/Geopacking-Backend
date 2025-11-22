@@ -13,11 +13,7 @@ import com.backend.geopacking.service.ProductoEXService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 
 @Service
@@ -25,11 +21,9 @@ import java.util.List;
 @AllArgsConstructor
 public class ProductoEXServiceImpl implements ProductoEXService {
 
-
     private final ProductoEXRepository productoEXRepository;
-    private final MaterialRepository materialRepository; // <-- Inyecta
+    private final MaterialRepository materialRepository;
     private final ColorRepository colorRepository;
-
 
     @Override
     public List<ProductoEX> getAllEx() { return productoEXRepository.findAll(); }
@@ -37,59 +31,53 @@ public class ProductoEXServiceImpl implements ProductoEXService {
     @Override
     public ProductoEX getExByName(String name) {
         return productoEXRepository.findByName(name)
-                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con nombre: " + name));
+                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado: " + name));
     }
 
     @Override
     public ProductoEX getExByCode(String code) {
         return productoEXRepository.findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con codigo: " + code));
+                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado: " + code));
     }
 
     @Override
     public ProductoEX createEX(ProductoDTO dto) {
-
         ProductoEX productoEX = new ProductoEX();
-        mapDtoToEntity(dto, productoEX);
+        mapCommonFields(dto, productoEX);
+
+        if (dto.getMaterialId() != null) {
+            Material material = materialRepository.findById(dto.getMaterialId())
+                    .orElseThrow(() -> new EntityNotFoundException("Material no encontrado ID: " + dto.getMaterialId()));
+            productoEX.setMaterial(material);
+        }
+
         return productoEXRepository.save(productoEX);
     }
 
     @Override
     public ProductoEX updateEX(String code, ProductoDTO dto) {
-        ProductoEX productoEX = productoEXRepository.findByCode(code)
-                .orElseThrow(() -> new EntityNotFoundException("Producto no encontrado con codigo: " + code));
+        ProductoEX productoEX = getExByCode(code);
 
+        mapCommonFields(dto, productoEX);
 
-        mapDtoToEntity(dto, productoEX);
+        if (dto.getMaterialId() != null) {
+            Material material = materialRepository.findById(dto.getMaterialId())
+                    .orElseThrow(() -> new EntityNotFoundException("Material no encontrado ID: " + dto.getMaterialId()));
+            productoEX.setMaterial(material);
+        } else {
+            productoEX.setMaterial(null);
+        }
 
         return productoEXRepository.save(productoEX);
     }
 
     @Override
     public void deleteEX(String code) {
-        ProductoEX productoEX = productoEXRepository.findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con codigo: " + code));
-
+        ProductoEX productoEX = getExByCode(code);
         productoEXRepository.delete(productoEX);
     }
 
-    private void mapDtoToEntity(ProductoDTO dto, Products entity) {
-        if (dto.getMaterialId() != null) {
-            Material material = materialRepository.findById(dto.getMaterialId())
-                    .orElseThrow(() -> new EntityNotFoundException("Material no encontrado con ID: " + dto.getMaterialId()));
-            entity.setMaterial(material);
-        } else {
-            entity.setMaterial(null);
-        }
-
-        if (dto.getColorId() != null) {
-            Color color = colorRepository.findById(dto.getColorId())
-                    .orElseThrow(() -> new EntityNotFoundException("Color no encontrado con ID: " + dto.getColorId()));
-            entity.setColor(color);
-        } else {
-            entity.setColor(null);
-        }
-
+    private void mapCommonFields(ProductoDTO dto, Products entity) {
         entity.setName(dto.getName());
         entity.setCode(dto.getCode());
         entity.setReferencia(dto.getReferencia());
@@ -99,5 +87,13 @@ public class ProductoEXServiceImpl implements ProductoEXService {
         entity.setUnidadDeMedida(dto.getUnidadDeMedida());
         entity.setPesoUnitario(dto.getPesoUnitario());
         entity.setActivo(dto.isActivo());
+
+        if (dto.getColorId() != null) {
+            Color color = colorRepository.findById(dto.getColorId())
+                    .orElseThrow(() -> new EntityNotFoundException("Color no encontrado ID: " + dto.getColorId()));
+            entity.setColor(color);
+        } else {
+            entity.setColor(null);
+        }
     }
 }
