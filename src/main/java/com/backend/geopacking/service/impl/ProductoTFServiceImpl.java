@@ -91,7 +91,9 @@ public class ProductoTFServiceImpl implements ProductoTFService {
         entity.setLinea(dto.getLinea());
         entity.setCategoria(dto.getCategoria());
         entity.setUnidadDeMedida(dto.getUnidadDeMedida());
-        entity.setPesoUnitario(dto.getPesoUnitario());
         entity.setActivo(dto.isActivo());
+        if (entity instanceof ProductoTF) {
+            ((ProductoTF) entity).setPesoUnitario(dto.getPesoUnitario());
+        }
     }
 }

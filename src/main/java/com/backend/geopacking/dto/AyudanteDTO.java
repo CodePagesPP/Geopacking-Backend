@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ReporteDTO {
+public class AyudanteDTO {
     private String dni;
     private String password;
     private String name;

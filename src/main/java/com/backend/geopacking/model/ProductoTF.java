@@ -1,7 +1,6 @@
 package com.backend.geopacking.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -10,4 +9,10 @@ import lombok.EqualsAndHashCode;
 @Entity
 @Table(name = "Producto_TF")
 public class ProductoTF extends Products{
+    @Column(name = "peso_unitario_g")
+    private Double pesoUnitario;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "material_id")
+    private Material material;
 }

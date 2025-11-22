@@ -3,6 +3,7 @@ package com.backend.geopacking.controller;
 import com.backend.geopacking.auth.AuthRequest;
 import com.backend.geopacking.auth.AuthResponse;
 import com.backend.geopacking.dto.AdminDTO;
+import com.backend.geopacking.dto.UserCreateDTO;
 import com.backend.geopacking.dto.UserDTO;
 import com.backend.geopacking.dto.UserProfileDTO;
 import com.backend.geopacking.model.User;
@@ -26,10 +27,14 @@ public class AuthController {
     private final UserRepository userRepository;
 
     @PostMapping("/registerAdmin")
-    public ResponseEntity<UserDTO> register(@RequestBody AdminDTO request){
+    public ResponseEntity<UserDTO> registerAdmin(@RequestBody AdminDTO request) {
         return ResponseEntity.ok(userService.registerAdmin(request));
-    }
 
+    }
+    @PostMapping("/registerUser")
+    public ResponseEntity<UserDTO> register(@RequestBody UserCreateDTO request){
+        return ResponseEntity.ok(userService.registerUser(request));
+    }
     @GetMapping("/profile")
     public ResponseEntity<UserProfileDTO> getProfile(@AuthenticationPrincipal UserDetails userDetails) {
         String username = userDetails.getUsername();

@@ -30,7 +30,6 @@ import java.util.List;
 public class OperadorController {
 
     private final OperadorService operadorService;
-    private final EtiquetaService etiquetaService;
     @PostMapping
     public ResponseEntity<UserDTO> registerOperador(@RequestBody OperadorDTO operadorDTO) {
         return new ResponseEntity<>(operadorService.registerOperador(operadorDTO), HttpStatus.CREATED);

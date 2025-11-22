@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -74,12 +75,19 @@ public class ProductoEXServiceImpl implements ProductoEXService {
     }
 
     private void mapDtoToEntity(ProductoDTO dto, Products entity) {
-        if (dto.getMaterialId() != null) {
-            Material material = materialRepository.findById(dto.getMaterialId())
-                    .orElseThrow(() -> new EntityNotFoundException("Material no encontrado con ID: " + dto.getMaterialId()));
-            entity.setMaterial(material);
+
+        if (dto.getMaterialesIds() != null && !dto.getMaterialesIds().isEmpty()) {
+
+            List<Material> listaMateriales = materialRepository.findAllById(dto.getMaterialesIds());
+
+            if(listaMateriales.size() != dto.getMaterialesIds().size()) {
+
+                throw new EntityNotFoundException("Algunos materiales no existen");
+            }
+
+            ((ProductoEX) entity).setMateriales(listaMateriales);
         } else {
-            entity.setMaterial(null);
+            ((ProductoEX) entity).setMateriales(Collections.emptyList());
         }
 
         if (dto.getColorId() != null) {
@@ -97,7 +105,6 @@ public class ProductoEXServiceImpl implements ProductoEXService {
         entity.setLinea(dto.getLinea());
         entity.setCategoria(dto.getCategoria());
         entity.setUnidadDeMedida(dto.getUnidadDeMedida());
-        entity.setPesoUnitario(dto.getPesoUnitario());
         entity.setActivo(dto.isActivo());
     }
 }

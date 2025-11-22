@@ -1,13 +1,13 @@
 package com.backend.geopacking.service.impl;
 
-import com.backend.geopacking.dto.ReporteDTO;
+import com.backend.geopacking.dto.AyudanteDTO;
 import com.backend.geopacking.dto.UserDTO;
-import com.backend.geopacking.model.Reporte;
+import com.backend.geopacking.model.Ayudante;
 import com.backend.geopacking.model.RoleE;
 import com.backend.geopacking.model.User;
-import com.backend.geopacking.repository.ReporteRepository;
+import com.backend.geopacking.repository.AyudanteRepository;
 import com.backend.geopacking.repository.RoleRepository;
-import com.backend.geopacking.service.ReporteService;
+import com.backend.geopacking.service.AyudanteService;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -21,14 +21,14 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class ReporteServiceImpl implements ReporteService {
-    private final ReporteRepository reporteRepository;
+public class AyudanteServiceImpl implements AyudanteService {
+    private final AyudanteRepository ayudanteRepository;
     private final RoleRepository roleRepository; // Asumo que tienes este repo
     private final PasswordEncoder passwordEncoder; // Asumo que lo tienes configurado
 
     @Override
-    public UserDTO registerReporte(ReporteDTO reporte) {
-        if(reporteRepository.findByDni(reporte.getDni()).isPresent()){
+    public UserDTO registerReporte(AyudanteDTO reporte) {
+        if(ayudanteRepository.findByDni(reporte.getDni()).isPresent()){
             throw new EntityExistsException("Reporte con este DNI ya existe");
         };
 
@@ -36,7 +36,7 @@ public class ReporteServiceImpl implements ReporteService {
         RoleE ReporteRole = roleRepository.findByName("REPORT")
                 .orElseThrow(() -> new RuntimeException("Rol Reporte no existe en la base de datos"));
 
-        Reporte user = Reporte.builder()
+        Ayudante user = Ayudante.builder()
                 .dni(reporte.getDni())
                 .password(passwordEncoder.encode(reporte.getPassword()))
                 .name(reporte.getName())
@@ -46,54 +46,54 @@ public class ReporteServiceImpl implements ReporteService {
                 .createdAt(Timestamp.valueOf(LocalDateTime.now()))
                 .build();
 
-        return mapToDTO(reporteRepository.save(user));
+        return mapToDTO(ayudanteRepository.save(user));
     }
 
     @Override
     public List<UserDTO> getAllReportes() {
-        return reporteRepository.findReporteByRoleName("REPORT").stream()
+        return ayudanteRepository.findReporteByRoleName("REPORT").stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     public UserDTO getReporteById(long id) {
-        Reporte reporte = reporteRepository.findReporteById(id)
+        Ayudante ayudante = ayudanteRepository.findReporteById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Reporte no encontrado o no es un Reporte"));
-        return mapToDTO(reporte);
+        return mapToDTO(ayudante);
     }
 
     @Override
-    public UserDTO updateReporte(long id, ReporteDTO Reporte) {
-        Reporte ReporteFound = reporteRepository.findReporteById(id)
+    public UserDTO updateReporte(long id, AyudanteDTO Reporte) {
+        Ayudante ayudanteFound = ayudanteRepository.findReporteById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Reporte no encontrado o no es un Reporte"));
 
         // Actualización selectiva (similar a tu updateAdmin)
         if(Reporte.getDni() != null){
-            ReporteFound.setDni(Reporte.getDni());
+            ayudanteFound.setDni(Reporte.getDni());
         }
         if(Reporte.getPassword() != null){
-            ReporteFound.setPassword(passwordEncoder.encode(Reporte.getPassword()));
+            ayudanteFound.setPassword(passwordEncoder.encode(Reporte.getPassword()));
         }
         if(Reporte.getName() != null){
-            ReporteFound.setName(Reporte.getName());
+            ayudanteFound.setName(Reporte.getName());
         }
         if(Reporte.getLastName() != null){
-            ReporteFound.setLastName(Reporte.getLastName());
+            ayudanteFound.setLastName(Reporte.getLastName());
         }
         if(Reporte.getSex() != null){
-            ReporteFound.setSex(Reporte.getSex());
+            ayudanteFound.setSex(Reporte.getSex());
         }
 
-        ReporteFound.setUpdatedAt(Timestamp.valueOf(LocalDateTime.now()));
-        return mapToDTO(reporteRepository.save(ReporteFound));
+        ayudanteFound.setUpdatedAt(Timestamp.valueOf(LocalDateTime.now()));
+        return mapToDTO(ayudanteRepository.save(ayudanteFound));
     }
 
     @Override
     public void deleteReporte(long id) {
-        Reporte ReporteFound = reporteRepository.findReporteById(id)
+        Ayudante ayudanteFound = ayudanteRepository.findReporteById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Reporte no encontrado o no es un Reporte"));
-        reporteRepository.delete(ReporteFound);
+        ayudanteRepository.delete(ayudanteFound);
     }
 
     private UserDTO mapToDTO(User user){

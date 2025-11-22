@@ -56,7 +56,8 @@ public class SecurityConfig {
                                 "/colors/**",
                                 "/origins/**",
                                 "/inventario/**",
-                                "/reportes/**").hasAnyAuthority("ADMIN_ACCESS")
+                                "/reportes/**",
+                                "/users/**").hasAnyAuthority("ADMIN_ACCESS")
                         .requestMatchers("/rol/**").hasAuthority("ROLE_ACCESS")
                         .anyRequest().authenticated()
                 ).exceptionHandling(ex -> ex
