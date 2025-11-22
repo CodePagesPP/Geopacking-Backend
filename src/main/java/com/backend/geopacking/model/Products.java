@@ -32,8 +32,7 @@ public abstract class Products {
     @Column(name = "unidad_medida", nullable = false)
     private String unidadDeMedida;
 
-    @Column(name = "peso_unitario_g")
-    private Double pesoUnitario;
+
 
     @Column(name = "estado_activo", nullable = false)
     private boolean activo = true;

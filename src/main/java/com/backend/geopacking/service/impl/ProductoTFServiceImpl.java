@@ -84,9 +84,11 @@ public class ProductoTFServiceImpl implements ProductoTFService {
         entity.setLinea(dto.getLinea());
         entity.setCategoria(dto.getCategoria());
         entity.setUnidadDeMedida(dto.getUnidadDeMedida());
-        entity.setPesoUnitario(dto.getPesoUnitario());
-        entity.setActivo(dto.isActivo());
 
+        entity.setActivo(dto.isActivo());
+        if (entity instanceof ProductoTF) {
+            ((ProductoTF) entity).setPesoUnitario(dto.getPesoUnitario());
+        }
         if (dto.getColorId() != null) {
             Color color = colorRepository.findById(dto.getColorId())
                     .orElseThrow(() -> new EntityNotFoundException("Color no encontrado ID: " + dto.getColorId()));

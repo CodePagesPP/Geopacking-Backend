@@ -14,6 +14,8 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -42,31 +44,19 @@ public class ProductoEXServiceImpl implements ProductoEXService {
 
     @Override
     public ProductoEX createEX(ProductoDTO dto) {
+
         ProductoEX productoEX = new ProductoEX();
         mapCommonFields(dto, productoEX);
-
-        if (dto.getMaterialId() != null) {
-            Material material = materialRepository.findById(dto.getMaterialId())
-                    .orElseThrow(() -> new EntityNotFoundException("Material no encontrado ID: " + dto.getMaterialId()));
-            productoEX.setMaterial(material);
-        }
-
         return productoEXRepository.save(productoEX);
     }
 
     @Override
     public ProductoEX updateEX(String code, ProductoDTO dto) {
-        ProductoEX productoEX = getExByCode(code);
+        ProductoEX productoEX = productoEXRepository.findByCode(code)
+                .orElseThrow(() -> new EntityNotFoundException("Producto no encontrado con codigo: " + code));
+
 
         mapCommonFields(dto, productoEX);
-
-        if (dto.getMaterialId() != null) {
-            Material material = materialRepository.findById(dto.getMaterialId())
-                    .orElseThrow(() -> new EntityNotFoundException("Material no encontrado ID: " + dto.getMaterialId()));
-            productoEX.setMaterial(material);
-        } else {
-            productoEX.setMaterial(null);
-        }
 
         return productoEXRepository.save(productoEX);
     }
@@ -78,6 +68,20 @@ public class ProductoEXServiceImpl implements ProductoEXService {
     }
 
     private void mapCommonFields(ProductoDTO dto, Products entity) {
+
+        if (dto.getMaterialesIds() != null && !dto.getMaterialesIds().isEmpty()) {
+
+            List<Material> listaMateriales = materialRepository.findAllById(dto.getMaterialesIds());
+
+            if(listaMateriales.size() != dto.getMaterialesIds().size()) {
+
+                throw new EntityNotFoundException("Algunos materiales no existen");
+            }
+
+            ((ProductoEX) entity).setMateriales(listaMateriales);
+        } else {
+            ((ProductoEX) entity).setMateriales(Collections.emptyList());
+        }
         entity.setName(dto.getName());
         entity.setCode(dto.getCode());
         entity.setReferencia(dto.getReferencia());
@@ -85,7 +89,6 @@ public class ProductoEXServiceImpl implements ProductoEXService {
         entity.setLinea(dto.getLinea());
         entity.setCategoria(dto.getCategoria());
         entity.setUnidadDeMedida(dto.getUnidadDeMedida());
-        entity.setPesoUnitario(dto.getPesoUnitario());
         entity.setActivo(dto.isActivo());
 
         if (dto.getColorId() != null) {

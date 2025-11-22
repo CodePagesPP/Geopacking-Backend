@@ -10,6 +10,9 @@ import lombok.EqualsAndHashCode;
 @Table(name = "Producto_TF")
 public class ProductoTF extends Products{
 
+    @Column(name = "peso_unitario_g")
+    private Double pesoUnitario;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "producto_base_id")
     private ProductoEX productoBase;
