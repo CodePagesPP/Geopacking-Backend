@@ -18,6 +18,7 @@ public class UserDTO {
     private String name;
     private String lastName;
     private String role;
+    private String sex;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 }

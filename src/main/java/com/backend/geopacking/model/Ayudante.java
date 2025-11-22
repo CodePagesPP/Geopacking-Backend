@@ -8,11 +8,11 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name="reportes")
+@Table(name="ayudantes")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @SuperBuilder
-public class Reporte extends User {
+public class Ayudante extends User {
 
 }
