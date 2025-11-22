@@ -59,7 +59,7 @@ public class MaquinaServiceImpl implements MaquinaService {
     }
 
     @Override
-    public Molino createMolino(MolinoDTO dto) { // <-- Acepta DTO
+    public Molino createMolino(MolinoDTO dto) {
         // 1. Buscar los orígenes reales desde la DB
         Set<Origen> managedOrigenes = new HashSet<>();
         if (dto.getOrigenIds() != null && !dto.getOrigenIds().isEmpty()) {
@@ -69,6 +69,7 @@ public class MaquinaServiceImpl implements MaquinaService {
         // 2. Construir el nuevo Molino
         Molino molino = Molino.builder()
                 .codigo(dto.getCodigo())
+                .nroSerie(dto.getNroSerie())
                 .marca(dto.getMarca())
                 .modelo(dto.getModelo())
                 .activo(dto.isActivo())
@@ -83,19 +84,18 @@ public class MaquinaServiceImpl implements MaquinaService {
 
     @Override
     public Extrusora updateExtrusora(Long id, Extrusora details) {
-        Maquina maquina = getMaquinaById(id); // Reutiliza el método que ya lanza excepción
+        Maquina maquina = getMaquinaById(id);
 
         if (!(maquina instanceof Extrusora)) {
             throw new IllegalArgumentException("La máquina con id " + id + " no es una Extrusora.");
         }
 
         Extrusora existing = (Extrusora) maquina;
-        // Actualizar campos comunes
         existing.setCodigo(details.getCodigo());
+        existing.setNroSerie(details.getNroSerie());
         existing.setMarca(details.getMarca());
         existing.setModelo(details.getModelo());
         existing.setActivo(details.isActivo());
-        // Actualizar campo único
         existing.setRendimiento(details.getRendimiento());
 
         return maquinaRepository.save(existing);
@@ -111,6 +111,7 @@ public class MaquinaServiceImpl implements MaquinaService {
 
         Termoformadora existing = (Termoformadora) maquina;
         existing.setCodigo(details.getCodigo());
+        existing.setNroSerie(details.getNroSerie());
         existing.setMarca(details.getMarca());
         existing.setModelo(details.getModelo());
         existing.setActivo(details.isActivo());
@@ -120,7 +121,7 @@ public class MaquinaServiceImpl implements MaquinaService {
     }
 
     @Override
-    public Molino updateMolino(Long id, MolinoDTO dto) { // <-- Acepta DTO
+    public Molino updateMolino(Long id, MolinoDTO dto) {
         // 1. Encontrar el molino existente
         Molino existing = (Molino) maquinaRepository.findById(id)
                 .filter(m -> m instanceof Molino)
@@ -128,18 +129,18 @@ public class MaquinaServiceImpl implements MaquinaService {
 
         // 2. Actualizar campos base
         existing.setCodigo(dto.getCodigo());
+        existing.setNroSerie(dto.getNroSerie());
         existing.setMarca(dto.getMarca());
         existing.setModelo(dto.getModelo());
         existing.setActivo(dto.isActivo());
 
-        // 3. Actualizar la lista de orígenes
+        // 3. Actualizar orígenes... (igual)
         Set<Origen> managedOrigenes = new HashSet<>();
         if (dto.getOrigenIds() != null && !dto.getOrigenIds().isEmpty()) {
             managedOrigenes = new HashSet<>(origenRepository.findAllById(dto.getOrigenIds()));
         }
         existing.setOrigenes(managedOrigenes);
 
-        // 4. Guardar
         return maquinaRepository.save(existing);
     }
 
