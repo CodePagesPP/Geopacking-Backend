@@ -17,7 +17,6 @@ public abstract class Products {
     @Column(name = "codigo_interno", nullable = false, unique = true)
     private String code;
 
-
     @Column(name = "referencia")
     private String referencia;
 
@@ -38,10 +37,6 @@ public abstract class Products {
 
     @Column(name = "estado_activo", nullable = false)
     private boolean activo = true;
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "material_id")
-    private Material material;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "color_id")

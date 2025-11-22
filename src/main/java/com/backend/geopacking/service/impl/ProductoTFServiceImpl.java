@@ -3,19 +3,17 @@ package com.backend.geopacking.service.impl;
 import com.backend.geopacking.dto.ProductoDTO;
 import com.backend.geopacking.exceptions.ResourceNotFoundException;
 import com.backend.geopacking.model.Color;
-import com.backend.geopacking.model.Material;
+import com.backend.geopacking.model.ProductoEX;
 import com.backend.geopacking.model.ProductoTF;
 import com.backend.geopacking.model.Products;
 import com.backend.geopacking.repository.ColorRepository;
-import com.backend.geopacking.repository.MaterialRepository;
+import com.backend.geopacking.repository.ProductoEXRepository;
 import com.backend.geopacking.repository.ProductoTFRepository;
 import com.backend.geopacking.service.ProductoTFService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 
 @Service
@@ -23,9 +21,8 @@ import java.util.List;
 @AllArgsConstructor
 public class ProductoTFServiceImpl implements ProductoTFService {
 
-
     private final ProductoTFRepository productoTFRepository;
-    private final MaterialRepository materialRepository;
+    private final ProductoEXRepository productoEXRepository;
     private final ColorRepository colorRepository;
 
     @Override
@@ -34,56 +31,52 @@ public class ProductoTFServiceImpl implements ProductoTFService {
     @Override
     public ProductoTF getTfByName(String name) {
         return productoTFRepository.findByName(name)
-                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con nombre: " + name));
+                .orElseThrow(() -> new ResourceNotFoundException("Producto TF no encontrado: " + name));
     }
 
     @Override
     public ProductoTF getTfByCode(String code) {
         return productoTFRepository.findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con codigo: " + code));
+                .orElseThrow(() -> new ResourceNotFoundException("Producto TF no encontrado: " + code));
     }
 
     @Override
     public ProductoTF createTf(ProductoDTO dto) {
         ProductoTF productoTF = new ProductoTF();
-        mapDtoToEntity(dto, productoTF);
+        mapCommonFields(dto, productoTF);
+
+        if (dto.getMaterialId() != null) {
+            ProductoEX productoBase = productoEXRepository.findById(dto.getMaterialId())
+                    .orElseThrow(() -> new EntityNotFoundException("Producto Base (EX) no encontrado ID: " + dto.getMaterialId()));
+            productoTF.setProductoBase(productoBase);
+        }
+
         return productoTFRepository.save(productoTF);
     }
+
     @Override
     public ProductoTF updateTf(String code, ProductoDTO dto) {
-        ProductoTF productoTF = productoTFRepository.findByCode(code)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado con codigo: " + code));
+        ProductoTF productoTF = getTfByCode(code);
+        mapCommonFields(dto, productoTF);
 
-        mapDtoToEntity(dto, productoTF);
+        if (dto.getMaterialId() != null) {
+            ProductoEX productoBase = productoEXRepository.findById(dto.getMaterialId())
+                    .orElseThrow(() -> new EntityNotFoundException("Producto Base (EX) no encontrado ID: " + dto.getMaterialId()));
+            productoTF.setProductoBase(productoBase);
+        } else {
+            productoTF.setProductoBase(null);
+        }
 
         return productoTFRepository.save(productoTF);
     }
 
     @Override
     public void deleteTf(String code) {
-        ProductoTF productoTF = productoTFRepository.findByCode(code)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado con codigo: " + code));
-
+        ProductoTF productoTF = getTfByCode(code);
         productoTFRepository.delete(productoTF);
     }
 
-    private void mapDtoToEntity(ProductoDTO dto, Products entity) {
-        if (dto.getMaterialId() != null) {
-            Material material = materialRepository.findById(dto.getMaterialId())
-                    .orElseThrow(() -> new EntityNotFoundException("Material no encontrado con ID: " + dto.getMaterialId()));
-            entity.setMaterial(material);
-        } else {
-            entity.setMaterial(null);
-        }
-
-        if (dto.getColorId() != null) {
-            Color color = colorRepository.findById(dto.getColorId())
-                    .orElseThrow(() -> new EntityNotFoundException("Color no encontrado con ID: " + dto.getColorId()));
-            entity.setColor(color);
-        } else {
-            entity.setColor(null);
-        }
-
+    private void mapCommonFields(ProductoDTO dto, Products entity) {
         entity.setName(dto.getName());
         entity.setCode(dto.getCode());
         entity.setReferencia(dto.getReferencia());
@@ -93,5 +86,13 @@ public class ProductoTFServiceImpl implements ProductoTFService {
         entity.setUnidadDeMedida(dto.getUnidadDeMedida());
         entity.setPesoUnitario(dto.getPesoUnitario());
         entity.setActivo(dto.isActivo());
+
+        if (dto.getColorId() != null) {
+            Color color = colorRepository.findById(dto.getColorId())
+                    .orElseThrow(() -> new EntityNotFoundException("Color no encontrado ID: " + dto.getColorId()));
+            entity.setColor(color);
+        } else {
+            entity.setColor(null);
+        }
     }
 }

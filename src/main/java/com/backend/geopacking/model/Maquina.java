@@ -42,4 +42,7 @@ public abstract class Maquina {
 
     @Column(nullable = false)
     private boolean activo;
+
+    @Column(nullable = false, name = "nro_serie", unique = true)
+    private String nroSerie;
 }
