@@ -9,6 +9,6 @@ public interface MaterialService {
     Material getMaterialByCode(String code);
     Material getMaterialByName(String name);
     Material createMaterial(Material material);
-    Material updateMaterial(String code, Material materialDetails);
-    void deleteMaterial(String code);
+    Material updateMaterial(Long id, Material materialDetails);
+    void deleteMaterial(Long id);
 }

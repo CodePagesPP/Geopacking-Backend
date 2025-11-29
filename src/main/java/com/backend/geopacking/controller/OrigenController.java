@@ -37,15 +37,15 @@ public class OrigenController {
         return ResponseEntity.ok(origenService.getOriginByName(name));
     }
 
-    @PutMapping("/{code}")
-    public ResponseEntity<Origen> updateOrigen(@PathVariable String code, @RequestBody Origen origen) {
-        Origen updatedOrigen = origenService.updateOrigin(code, origen);
+    @PutMapping("/{id}")
+    public ResponseEntity<Origen> updateOrigen(@PathVariable Long id, @RequestBody Origen origen) {
+        Origen updatedOrigen = origenService.updateOrigin(id, origen);
         return ResponseEntity.ok(updatedOrigen);
     }
 
-    @DeleteMapping("/{code}")
-    public ResponseEntity<Void> deleteOrigen(@PathVariable String code) {
-        origenService.deleteOrigin(code);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteOrigen(@PathVariable Long id) {
+        origenService.deleteOrigin(id);
         return ResponseEntity.noContent().build();
     }
 }

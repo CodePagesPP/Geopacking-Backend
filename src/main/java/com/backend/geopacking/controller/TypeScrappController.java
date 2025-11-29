@@ -34,15 +34,15 @@ public class TypeScrappController {
         return ResponseEntity.ok(typeScrappService.getTypeScrappsByName(name));
     }
 
-    @PutMapping("/{code}")
-    public ResponseEntity<TypeScrapp> updatetypeScrapp(@PathVariable String code, @RequestBody TypeScrapp typeScrapp) {
-        TypeScrapp updatedtypeScrapp = typeScrappService.updateTypeScrapps(code, typeScrapp);
+    @PutMapping("/{id}")
+    public ResponseEntity<TypeScrapp> updatetypeScrapp(@PathVariable Long id, @RequestBody TypeScrapp typeScrapp) {
+        TypeScrapp updatedtypeScrapp = typeScrappService.updateTypeScrapps(id, typeScrapp);
         return ResponseEntity.ok(updatedtypeScrapp);
     }
 
-    @DeleteMapping("/{code}")
-    public ResponseEntity<Void> deletetypeScrapp(@PathVariable String code) {
-        typeScrappService.deleteTypeScrapps(code);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletetypeScrapp(@PathVariable Long id) {
+        typeScrappService.deleteTypeScrapps(id);
         return ResponseEntity.noContent().build();
     }
 }

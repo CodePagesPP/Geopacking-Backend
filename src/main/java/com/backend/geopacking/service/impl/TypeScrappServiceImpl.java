@@ -40,9 +40,9 @@ public class TypeScrappServiceImpl implements TypeScrappService {
     }
 
     @Override
-    public TypeScrapp updateTypeScrapps(String code, TypeScrapp origen) {
-        TypeScrapp origenFound = typeScrappRepository.findByCode(code)
-                .orElseThrow(() -> new RuntimeException("Tipo de scrapp  no encontrado con codigo: " + code));
+    public TypeScrapp updateTypeScrapps(Long id, TypeScrapp origen) {
+        TypeScrapp origenFound = typeScrappRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Tipo de scrapp  no encontrado con codigo: " + id));
 
         if (origen.getName() != null) {
             origenFound.setName(origen.getName());
@@ -56,9 +56,9 @@ public class TypeScrappServiceImpl implements TypeScrappService {
     }
 
     @Override
-    public void deleteTypeScrapps(String code) {
-        TypeScrapp origenFound = typeScrappRepository.findByCode(code)
-                .orElseThrow(() -> new RuntimeException("Tipo de scrapp no encontrado con codigo: " + code));
+    public void deleteTypeScrapps(Long id) {
+        TypeScrapp origenFound = typeScrappRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Tipo de scrapp no encontrado con codigo: " + id));
 
         typeScrappRepository.delete(origenFound);
     }

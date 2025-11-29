@@ -44,9 +44,9 @@ public class ColorServiceImpl implements ColorService {
     }
 
     @Override
-    public Color updateColor(String code, Color color) {
-        Color colorFound = colorRepository.findByCode(code)
-                .orElseThrow(() -> new RuntimeException("Color no encontrado con codigo: " + code));
+    public Color updateColor(Long id, Color color) {
+        Color colorFound = colorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Color no encontrado con codigo: " + id));
 
         if(color.getCode() != null) {
             colorFound.setCode(color.getCode());
@@ -60,9 +60,9 @@ public class ColorServiceImpl implements ColorService {
     }
 
     @Override
-    public void deleteColor(String code) {
-        Color colorFound = colorRepository.findByCode(code)
-                .orElseThrow(() -> new RuntimeException("Color no encontrado con codigo: " + code));
+    public void deleteColor(Long id) {
+        Color colorFound = colorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Color no encontrado con codigo: " + id));
 
         colorRepository.delete(colorFound);
     }

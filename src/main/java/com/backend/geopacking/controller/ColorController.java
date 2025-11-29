@@ -37,15 +37,15 @@ public class ColorController {
         return ResponseEntity.ok(colorService.getColorByName(name));
     }
 
-    @PutMapping("/{code}")
-    public ResponseEntity<Color> updateColor(@PathVariable String code, @RequestBody Color color) {
-        Color colorUpdated = colorService.updateColor(code, color);
+    @PutMapping("/{id}")
+    public ResponseEntity<Color> updateColor(@PathVariable Long id, @RequestBody Color color) {
+        Color colorUpdated = colorService.updateColor(id, color);
         return ResponseEntity.ok(colorUpdated);
     }
 
-    @DeleteMapping("/{code}")
-    public ResponseEntity<Void> deleteColor(@PathVariable String code) {
-        colorService.deleteColor(code);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteColor(@PathVariable Long id) {
+        colorService.deleteColor(id);
         return ResponseEntity.noContent().build();
     }
 }

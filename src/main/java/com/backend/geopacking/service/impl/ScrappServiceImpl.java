@@ -57,6 +57,8 @@ public class ScrappServiceImpl implements ScrappService {
         TypeScrapp typeScrapp = typeScrappRepository.findById(dto.getTypeScrappId())
                 .orElseThrow(() -> new EntityNotFoundException("Tipo de Scrapp no encontrado"));
 
+        LocalDate fechaActual = LocalDate.now();
+        LocalTime horaActual = LocalTime.now();
         int anioActual = LocalDate.now().getYear();
 
         Optional<Scrapp> ultimoRegistro = registroScrappRepository
@@ -71,7 +73,8 @@ public class ScrappServiceImpl implements ScrappService {
                 .anio(anioActual)
                 .pesoBruto(dto.getPesoBruto())
                 .pesoNeto(dto.getPesoNeto())
-                .fechaCreacion(LocalDate.now())
+                .fechaCreacion(fechaActual)
+                .horaCreacion(horaActual)
                 .turno(obtenerTurnoActual())
                 .maquina(maquina)
                 .operador(user)

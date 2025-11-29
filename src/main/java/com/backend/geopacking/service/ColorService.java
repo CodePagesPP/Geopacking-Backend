@@ -9,6 +9,6 @@ public interface ColorService {
     Color getColorByName(String name);
     Color getColorByCode(String code);
     Color createColor(Color color);
-    Color updateColor(String code, Color color);
-    void deleteColor(String code);
+    Color updateColor(Long id, Color color);
+    void deleteColor(Long id);
 }

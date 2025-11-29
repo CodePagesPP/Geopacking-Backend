@@ -41,15 +41,15 @@ public class MaterialController {
         return ResponseEntity.ok(materialService.getMaterialByName(name));
     }
 
-    @PutMapping("/{code}")
-    public ResponseEntity<Material> updateMaterial(@PathVariable String code, @RequestBody Material materialDetails) {
-        Material updatedMaterial = materialService.updateMaterial(code, materialDetails);
+    @PutMapping("/{id}")
+    public ResponseEntity<Material> updateMaterial(@PathVariable Long id, @RequestBody Material materialDetails) {
+        Material updatedMaterial = materialService.updateMaterial(id, materialDetails);
         return ResponseEntity.ok(updatedMaterial);
     }
 
-    @DeleteMapping("/{code}")
-    public ResponseEntity<Void> deleteMaterial(@PathVariable String code) {
-        materialService.deleteMaterial(code);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteMaterial(@PathVariable Long id) {
+        materialService.deleteMaterial(id);
         return ResponseEntity.noContent().build();
     }
 }

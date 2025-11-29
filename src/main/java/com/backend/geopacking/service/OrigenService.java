@@ -9,6 +9,6 @@ public interface OrigenService {
     Origen getOriginByName(String name);
     Origen getOriginByCode(String code);
     Origen createOrigin(Origen origen);
-    Origen updateOrigin(String code, Origen origen);
-    void deleteOrigin(String code);
+    Origen updateOrigin(Long id, Origen origen);
+    void deleteOrigin(Long id);
 }

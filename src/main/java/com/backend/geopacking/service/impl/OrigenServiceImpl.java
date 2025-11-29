@@ -41,9 +41,11 @@ public class OrigenServiceImpl implements OrigenService {
     }
 
     @Override
-    public Origen updateOrigin(String code, Origen origen) {
-        Origen origenFound = origenRepository.findByCode(code)
-                .orElseThrow(() -> new RuntimeException("Origen no encontrado con codigo: " + code));
+    public Origen updateOrigin(Long id, Origen origen) {
+
+
+        Origen origenFound = origenRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Origen no encontrado con id: " + id));
 
         if (origen.getName() != null) {
             origenFound.setName(origen.getName());
@@ -57,9 +59,9 @@ public class OrigenServiceImpl implements OrigenService {
     }
 
     @Override
-    public void deleteOrigin(String code) {
-        Origen origenFound = origenRepository.findByCode(code)
-                .orElseThrow(() -> new RuntimeException("Origen no encontrado con codigo: " + code));
+    public void deleteOrigin(Long id) {
+        Origen origenFound = origenRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Origen no encontrado con codigo: " + id));
 
         origenRepository.delete(origenFound);
     }
