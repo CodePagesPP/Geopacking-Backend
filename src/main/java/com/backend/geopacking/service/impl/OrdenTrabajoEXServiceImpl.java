@@ -1,0 +1,90 @@
+package com.backend.geopacking.service.impl;
+
+import com.backend.geopacking.dto.OrdenTrabajoEXDTO;
+import com.backend.geopacking.model.Maquina;
+import com.backend.geopacking.model.OrdenTrabajoEX;
+import com.backend.geopacking.model.ProductoEX;
+import com.backend.geopacking.model.User;
+import com.backend.geopacking.repository.MaquinaRepository;
+import com.backend.geopacking.repository.OrdenTrabajoEXRepository;
+import com.backend.geopacking.repository.ProductoEXRepository;
+import com.backend.geopacking.repository.UserRepository;
+import com.backend.geopacking.service.OrdenTrabajoEXService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@Transactional
+public class OrdenTrabajoEXServiceImpl implements OrdenTrabajoEXService{
+
+    @Autowired
+    OrdenTrabajoEXRepository otRepository;
+
+    @Autowired
+    private MaquinaRepository maquinaRepository;
+
+    @Autowired
+    private ProductoEXRepository productoRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+
+    @Override
+    public OrdenTrabajoEXDTO crearOrden(OrdenTrabajoEXDTO dto, String dniUsuario) {
+        OrdenTrabajoEX ot =  new OrdenTrabajoEX();
+
+        Maquina maquina = maquinaRepository.findById(dto.getMaquinaId())
+                .orElseThrow(() -> new RuntimeException("Máquina no encontrada con ID: " + dto.getMaquinaId()));
+
+        ProductoEX producto = productoRepository.findById(dto.getProductoId())
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado con ID: " + dto.getProductoId()));
+
+        User usuario = userRepository.findByDni(dniUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con dni: " + dniUsuario));
+
+        ot.setMaquina(maquina);
+        ot.setProducto(producto);
+        ot.setRequerimientoKg(dto.getRequerimientoKg());
+        ot.setCreadaPor(usuario);
+
+        long correlativo = otRepository.count() + 1;
+        ot.setCodigo("OT-EX-" + String.format("%04d", correlativo));
+
+        OrdenTrabajoEX ordenGuardada = otRepository.save(ot);
+
+        return mapToDTO(ordenGuardada);
+    }
+
+    @Override
+    public List<OrdenTrabajoEXDTO> listarOrdenes() {
+        List<OrdenTrabajoEX> ordenes = otRepository.findAll();
+        return ordenes.stream().map(this::mapToDTO).collect(Collectors.toList());
+    }
+
+    private OrdenTrabajoEXDTO mapToDTO(OrdenTrabajoEX entity) {
+        OrdenTrabajoEXDTO dto = new OrdenTrabajoEXDTO();
+
+        dto.setId(entity.getId());
+        dto.setCodigo(entity.getCodigo());
+        dto.setFechaCreacion(entity.getFechaCreacion());
+
+        dto.setRequerimientoKg(entity.getRequerimientoKg());
+        dto.setProducidoKg(entity.getProducidoKg());
+        dto.setEstado(entity.getEstado());
+
+        dto.setMaquinaId(entity.getMaquina().getId());
+        dto.setProductoId(entity.getProducto().getId());
+        dto.setCreadaPorId(entity.getCreadaPor().getId());
+
+        dto.setMaquinaNombre(entity.getMaquina().getModelo());
+        dto.setProductoNombre(entity.getProducto().getName());
+        dto.setCreadaPorUsername(entity.getCreadaPor().getName());
+
+        return dto;
+    }
+}
