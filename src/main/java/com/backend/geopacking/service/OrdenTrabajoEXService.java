@@ -7,4 +7,6 @@ import java.util.List;
 public interface OrdenTrabajoEXService {
     OrdenTrabajoEXDTO crearOrden(OrdenTrabajoEXDTO dto, String dniUsuario);
     List<OrdenTrabajoEXDTO> listarOrdenes();
+    List<OrdenTrabajoEXDTO> listarOrdenesPrioridad();
+    void actualizarPrioridades(List<OrdenTrabajoEXDTO> listaOrdenada);
 }

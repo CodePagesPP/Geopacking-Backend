@@ -2,6 +2,7 @@ package com.backend.geopacking.repository;
 
 import com.backend.geopacking.model.OrdenTrabajoEX;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -9,4 +10,7 @@ import java.util.Optional;
 @Repository
 public interface OrdenTrabajoEXRepository extends JpaRepository<OrdenTrabajoEX, Long> {
     Optional<OrdenTrabajoEX> findByCodigo(String codigo);
+
+    @Query("SELECT COALESCE(MAX(o.prioridad), 0) FROM OrdenTrabajoEX o")
+    Integer findMaxPrioridad();
 }
