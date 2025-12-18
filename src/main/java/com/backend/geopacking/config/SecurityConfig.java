@@ -58,7 +58,8 @@ public class SecurityConfig {
                                 "/inventario/**",
                                 "/orden-trabajo-ex/**",
                                 "/reportes/**",
-                                "/users/**").hasAnyAuthority("ADMIN_ACCESS")
+                                "/users/**",
+                                "/turno-ex").hasAnyAuthority("ADMIN_ACCESS")
                         .requestMatchers("/rol/**").hasAuthority("ROLE_ACCESS")
                         .anyRequest().authenticated()
                 ).exceptionHandling(ex -> ex
