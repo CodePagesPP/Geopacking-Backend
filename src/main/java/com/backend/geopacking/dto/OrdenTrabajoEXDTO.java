@@ -1,9 +1,11 @@
 package com.backend.geopacking.dto;
 
 import com.backend.geopacking.model.EstadoOT_EX;
+import com.backend.geopacking.model.Material;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class OrdenTrabajoEXDTO {
@@ -21,4 +23,5 @@ public class OrdenTrabajoEXDTO {
     private Double producidoKg;
     private EstadoOT_EX estado;
     private Integer prioridad;
+    private List<Material> materialesProducto;
 }

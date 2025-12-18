@@ -115,6 +115,7 @@ public class OrdenTrabajoEXServiceImpl implements OrdenTrabajoEXService{
         dto.setProductoNombre(entity.getProducto().getName());
         dto.setCreadaPorUsername(entity.getCreadaPor().getName());
         dto.setPrioridad(entity.getPrioridad());
+        dto.setMaterialesProducto(entity.getProducto().getMateriales());
         return dto;
     }
 }
