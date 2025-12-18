@@ -20,4 +20,5 @@ public class OrdenTrabajoEXDTO {
     private Double requerimientoKg;
     private Double producidoKg;
     private EstadoOT_EX estado;
+    private Integer prioridad;
 }

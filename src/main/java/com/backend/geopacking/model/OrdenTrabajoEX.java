@@ -40,6 +40,8 @@ public class OrdenTrabajoEX {
     @JoinColumn(name = "user_id", nullable = false)
     private User creadaPor;
 
+    private Integer prioridad;
+
     @PrePersist
     public void prePersist() {
         this.fechaCreacion = LocalDateTime.now();

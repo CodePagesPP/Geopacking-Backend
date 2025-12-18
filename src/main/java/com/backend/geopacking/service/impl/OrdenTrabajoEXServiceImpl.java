@@ -11,6 +11,7 @@ import com.backend.geopacking.repository.ProductoEXRepository;
 import com.backend.geopacking.repository.UserRepository;
 import com.backend.geopacking.service.OrdenTrabajoEXService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,6 +53,10 @@ public class OrdenTrabajoEXServiceImpl implements OrdenTrabajoEXService{
         ot.setRequerimientoKg(dto.getRequerimientoKg());
         ot.setCreadaPor(usuario);
 
+        Integer maxPrioridad = otRepository.findMaxPrioridad();
+
+        ot.setPrioridad(maxPrioridad + 1);
+
         long correlativo = otRepository.count() + 1;
         ot.setCodigo("OT-EX-" + String.format("%04d", correlativo));
 
@@ -64,6 +69,31 @@ public class OrdenTrabajoEXServiceImpl implements OrdenTrabajoEXService{
     public List<OrdenTrabajoEXDTO> listarOrdenes() {
         List<OrdenTrabajoEX> ordenes = otRepository.findAll();
         return ordenes.stream().map(this::mapToDTO).collect(Collectors.toList());
+    }
+
+
+    @Override
+    public List<OrdenTrabajoEXDTO> listarOrdenesPrioridad() {
+        List<OrdenTrabajoEX> ordenes = otRepository.findAll(Sort.by(Sort.Direction.ASC, "prioridad"));
+        return ordenes.stream().map(this::mapToDTO).collect(Collectors.toList());
+    }
+
+    @Override
+    public void actualizarPrioridades(List<OrdenTrabajoEXDTO> listaOrdenada) {
+
+        for (int i = 0; i < listaOrdenada.size(); i++) {
+            OrdenTrabajoEXDTO dto = listaOrdenada.get(i);
+
+
+            OrdenTrabajoEX ot = otRepository.findById(dto.getId())
+                    .orElseThrow(() -> new RuntimeException("OT no encontrada id: " + dto.getId()));
+
+
+            ot.setPrioridad(i + 1);
+
+
+            otRepository.save(ot);
+        }
     }
 
     private OrdenTrabajoEXDTO mapToDTO(OrdenTrabajoEX entity) {
@@ -84,7 +114,7 @@ public class OrdenTrabajoEXServiceImpl implements OrdenTrabajoEXService{
         dto.setMaquinaNombre(entity.getMaquina().getModelo());
         dto.setProductoNombre(entity.getProducto().getName());
         dto.setCreadaPorUsername(entity.getCreadaPor().getName());
-
+        dto.setPrioridad(entity.getPrioridad());
         return dto;
     }
 }

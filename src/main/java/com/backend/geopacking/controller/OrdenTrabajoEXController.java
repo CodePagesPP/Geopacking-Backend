@@ -28,4 +28,17 @@ public class OrdenTrabajoEXController {
         List<OrdenTrabajoEXDTO> lista = ordenTrabajoEXService.listarOrdenes();
         return new ResponseEntity<>(lista, HttpStatus.OK);
     }
+
+    @GetMapping("/list-pri")
+    public ResponseEntity<List<OrdenTrabajoEXDTO>> listarOrdenesPrioridad() {
+        List<OrdenTrabajoEXDTO> lista = ordenTrabajoEXService.listarOrdenesPrioridad();
+        return new ResponseEntity<>(lista, HttpStatus.OK);
+    }
+
+
+    @PutMapping("/ordenar")
+    public ResponseEntity<Void> actualizarPrioridades(@RequestBody List<OrdenTrabajoEXDTO> listaOrdenada) {
+        ordenTrabajoEXService.actualizarPrioridades(listaOrdenada);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 }
