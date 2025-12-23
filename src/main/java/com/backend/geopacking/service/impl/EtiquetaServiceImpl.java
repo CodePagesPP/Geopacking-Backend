@@ -26,27 +26,21 @@ public class EtiquetaServiceImpl implements EtiquetaService {
         Scrapp registro = registroScrappRepository.findById(registroId)
                 .orElseThrow(() -> new RuntimeException("Registro de Scrapp no encontrado"));
 
-        // --- Lógica de Datos (sin cambios) ---
         User user = registro.getOperador();
         Maquina maquina = registro.getMaquina();
         String operador = user.getName() + " " + user.getLastName();
         String codigoMaquina = maquina.getCodigo();
         String fecha = registro.getFechaCreacion().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
         String turno = registro.getTurno();
-        String contenido = "MOLIDO POLIPROPILENO NATURAL";
+        String contenido = registro.getTypeScrapp().getName();
         String anioCorto = String.valueOf(registro.getAnio()).substring(2);
         String bolson = registro.getNumeroBolson() + "/" + anioCorto;
         double pesoBruto = registro.getPesoBruto();
         double pesoNeto = registro.getPesoNeto();
-        String origenesStr = "N/A";
+        String origenStr = registro.getOrigen().getCode();
         if (maquina instanceof Molino) {
             Molino molino = (Molino) maquina;
-            Set<Origen> origenes = molino.getOrigenes();
-            if (origenes != null && !origenes.isEmpty()) {
-                origenesStr = origenes.stream()
-                        .map(Origen::getCode)
-                        .collect(Collectors.joining(", "));
-            }
+
         }
         // --- Fin Lógica de Datos ---
 
@@ -128,7 +122,7 @@ public class EtiquetaServiceImpl implements EtiquetaService {
         origenLabelCell.setPaddingTop(1f);
         origenLabelCell.setPaddingBottom(1f);
         dataTable.addCell(origenLabelCell);
-        PdfPCell origenValueCell = new PdfPCell(new Paragraph(origenesStr, fontValue));
+        PdfPCell origenValueCell = new PdfPCell(new Paragraph(origenStr, fontValue));
         origenValueCell.setBorder(Rectangle.NO_BORDER);
         origenValueCell.setColspan(3);
         origenValueCell.setPaddingTop(1f);
