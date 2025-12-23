@@ -42,19 +42,16 @@ public class EtiquetaServiceImpl implements EtiquetaService {
             Molino molino = (Molino) maquina;
 
         }
-        // --- Fin Lógica de Datos ---
 
-        // --- 1. DEFINICIÓN DEL DOCUMENTO (Sin cambios) ---
         float ancho = 160f * 2.83465f; // 160mm
-        float alto = 100f * 2.83465f;  // 100mm (Mantenemos el alto original)
+        float alto = 100f * 2.83465f;  // 100mm
         Document document = new Document(new Rectangle(ancho, alto));
-        document.setMargins(5, 5, 5, 5); // Márgenes pequeños
+        document.setMargins(5, 5, 5, 5);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PdfWriter writer = PdfWriter.getInstance(document, baos);
         document.open();
 
-        // --- 2. FUENTES (Sin cambios) ---
         Font fontTitle = new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD);
         Font fontLabel = new Font(Font.FontFamily.HELVETICA, 9, Font.BOLD);
         Font fontValue = new Font(Font.FontFamily.HELVETICA, 9);
