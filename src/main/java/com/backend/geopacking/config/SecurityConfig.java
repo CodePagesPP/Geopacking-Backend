@@ -55,6 +55,7 @@ public class SecurityConfig {
                                 "/permission/**",
                                 "/colors/**",
                                 "/origins/**",
+                                "/insumos/**",
                                 "/inventario/**",
                                 "/orden-trabajo-ex/**",
                                 "/reportes/**",
