@@ -2,14 +2,8 @@ package com.backend.geopacking.service.impl;
 
 import com.backend.geopacking.dto.PaginatedScrappReportDTO;
 import com.backend.geopacking.dto.ScrappDTO;
-import com.backend.geopacking.model.Maquina;
-import com.backend.geopacking.model.Scrapp;
-import com.backend.geopacking.model.TypeScrapp;
-import com.backend.geopacking.model.User;
-import com.backend.geopacking.repository.MaquinaRepository;
-import com.backend.geopacking.repository.ScrappRepository;
-import com.backend.geopacking.repository.TypeScrappRepository;
-import com.backend.geopacking.repository.UserRepository;
+import com.backend.geopacking.model.*;
+import com.backend.geopacking.repository.*;
 import com.backend.geopacking.service.InventarioService;
 import com.backend.geopacking.service.ScrappService;
 import com.itextpdf.text.*;
@@ -40,6 +34,7 @@ public class ScrappServiceImpl implements ScrappService {
     private final UserRepository userRepository;
     private final InventarioService  inventarioService;
     private final TypeScrappRepository typeScrappRepository;
+    private final OrigenRepository origenRepository;
     private static final Font FONT_TITULO = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, BaseColor.BLACK);
     private static final Font FONT_HEADER = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, BaseColor.WHITE);
     private static final Font FONT_BODY = FontFactory.getFont(FontFactory.HELVETICA, 9, BaseColor.BLACK);
@@ -56,6 +51,9 @@ public class ScrappServiceImpl implements ScrappService {
 
         TypeScrapp typeScrapp = typeScrappRepository.findById(dto.getTypeScrappId())
                 .orElseThrow(() -> new EntityNotFoundException("Tipo de Scrapp no encontrado"));
+
+        Origen origen = origenRepository.findById(dto.getOrigenId())
+                .orElseThrow(() -> new EntityNotFoundException("Origen no encontrado"));
 
         LocalDate fechaActual = LocalDate.now();
         LocalTime horaActual = LocalTime.now();
@@ -79,6 +77,7 @@ public class ScrappServiceImpl implements ScrappService {
                 .maquina(maquina)
                 .operador(user)
                 .typeScrapp(typeScrapp)
+                .origen(origen)
                 .build();
 
         Scrapp scrappGuardado = registroScrappRepository.save(nuevoRegistro);

@@ -16,7 +16,7 @@ import java.util.Set;
 @NoArgsConstructor
 @SuperBuilder
 public class Molino extends Maquina {
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "molino_origenes",
             joinColumns = @JoinColumn(name = "molino_id"),
