@@ -1,10 +1,7 @@
 package com.backend.geopacking.service.impl;
 
 import com.backend.geopacking.dto.OrdenTrabajoEXDTO;
-import com.backend.geopacking.model.Maquina;
-import com.backend.geopacking.model.OrdenTrabajoEX;
-import com.backend.geopacking.model.ProductoEX;
-import com.backend.geopacking.model.User;
+import com.backend.geopacking.model.*;
 import com.backend.geopacking.repository.MaquinaRepository;
 import com.backend.geopacking.repository.OrdenTrabajoEXRepository;
 import com.backend.geopacking.repository.ProductoEXRepository;
@@ -73,6 +70,17 @@ public class OrdenTrabajoEXServiceImpl implements OrdenTrabajoEXService{
 
 
     @Override
+    public List<OrdenTrabajoEXDTO> listarOrdenesOT() {
+
+        List<OrdenTrabajoEX> ordenes = otRepository.findAll(Sort.by(Sort.Direction.ASC, "prioridad"))
+                .stream()
+                .filter(ot -> !ot.getEstado().equals(EstadoOT_EX.COMPLETADO))
+                .collect(Collectors.toList());
+
+        return ordenes.stream().map(this::mapToDTO).collect(Collectors.toList());
+    }
+
+    @Override
     public List<OrdenTrabajoEXDTO> listarOrdenesPrioridad() {
         List<OrdenTrabajoEX> ordenes = otRepository.findAll(Sort.by(Sort.Direction.ASC, "prioridad"));
         return ordenes.stream().map(this::mapToDTO).collect(Collectors.toList());
@@ -109,7 +117,7 @@ public class OrdenTrabajoEXServiceImpl implements OrdenTrabajoEXService{
 
         dto.setMaquinaId(entity.getMaquina().getId());
         dto.setProductoId(entity.getProducto().getId());
-        dto.setCreadaPorId(entity.getCreadaPor().getId());
+        dto.setCreadaPor(entity.getCreadaPor().getName());
 
         dto.setMaquinaNombre(entity.getMaquina().getModelo());
         dto.setProductoNombre(entity.getProducto().getName());

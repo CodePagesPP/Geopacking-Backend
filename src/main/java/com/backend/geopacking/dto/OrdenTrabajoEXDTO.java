@@ -15,7 +15,7 @@ public class OrdenTrabajoEXDTO {
     private LocalDateTime fechaCreacion;
     private Long maquinaId;
     private Long productoId;
-    private Long creadaPorId;
+    private String creadaPor;
     private String maquinaNombre;
     private String productoNombre;
     private String creadaPorUsername;

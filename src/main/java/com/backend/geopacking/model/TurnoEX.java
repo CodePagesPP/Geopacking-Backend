@@ -26,4 +26,8 @@ public class TurnoEX {
 
     @OneToMany(mappedBy = "turno", cascade = CascadeType.ALL)
     private List<MaterialEX> materiales;
+    @OneToMany(mappedBy = "turno", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ScrappEX> scrapps;
+    private String comentarios;
+    private String usuarioNombre;
 }
