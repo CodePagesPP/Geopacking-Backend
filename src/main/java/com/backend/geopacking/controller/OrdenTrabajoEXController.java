@@ -29,6 +29,13 @@ public class OrdenTrabajoEXController {
         return new ResponseEntity<>(lista, HttpStatus.OK);
     }
 
+
+    @GetMapping("/ot")
+    public ResponseEntity<List<OrdenTrabajoEXDTO>> listarOrdenesot() {
+        List<OrdenTrabajoEXDTO> lista = ordenTrabajoEXService.listarOrdenesOT();
+        return new ResponseEntity<>(lista, HttpStatus.OK);
+    }
+
     @GetMapping("/list-pri")
     public ResponseEntity<List<OrdenTrabajoEXDTO>> listarOrdenesPrioridad() {
         List<OrdenTrabajoEXDTO> lista = ordenTrabajoEXService.listarOrdenesPrioridad();

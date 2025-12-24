@@ -9,4 +9,5 @@ public interface OrdenTrabajoEXService {
     List<OrdenTrabajoEXDTO> listarOrdenes();
     List<OrdenTrabajoEXDTO> listarOrdenesPrioridad();
     void actualizarPrioridades(List<OrdenTrabajoEXDTO> listaOrdenada);
+    List<OrdenTrabajoEXDTO> listarOrdenesOT();
 }

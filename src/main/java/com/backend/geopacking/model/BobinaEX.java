@@ -20,4 +20,7 @@ public class BobinaEX {
     @JoinColumn(name = "turno_id")
     @JsonIgnore
     private TurnoEX turno;
+
+    private String horaInicio;
+    private String horaFin;
 }

@@ -47,6 +47,7 @@ public class UserServiceImpl implements UserService {
                 .dni(admin.getDni())
                 .password(passwordEncoder.encode(admin.getPassword()))
                 .role(adminRole)
+                .name(admin.getName())
                 .createdAt(Timestamp.valueOf(LocalDateTime.now()))
                 .build();
 
