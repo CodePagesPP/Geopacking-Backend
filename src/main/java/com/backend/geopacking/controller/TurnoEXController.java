@@ -166,17 +166,23 @@ public class TurnoEXController {
             document.add(new Paragraph("Bobinas Producidas:", boldFont));
             document.add(new Paragraph(" "));
 
-            PdfPTable tablaBobinas = new PdfPTable(3);
+            PdfPTable tablaBobinas = new PdfPTable(5);
             tablaBobinas.setWidthPercentage(100);
 
 
             addHeaderCell(tablaBobinas, "Código Bobina");
+            addHeaderCell(tablaBobinas, "H. Inicio");
+            addHeaderCell(tablaBobinas, "H. Fin");
             addHeaderCell(tablaBobinas, "Peso Bruto");
             addHeaderCell(tablaBobinas, "Peso Neto");
 
 
             for (BobinaEX b : turno.getBobinas()) {
                 tablaBobinas.addCell(new Phrase(b.getCodigo() != null ? b.getCodigo() : "-", normalFont));
+                String hIni = b.getHoraInicio() != null ? b.getHoraInicio() : "-";
+                String hFin = b.getHoraFin() != null ? b.getHoraFin() : "-";
+                tablaBobinas.addCell(new Phrase(hIni, normalFont));
+                tablaBobinas.addCell(new Phrase(hFin, normalFont));
                 tablaBobinas.addCell(new Phrase(String.valueOf(b.getPesoBruto()), normalFont));
                 tablaBobinas.addCell(new Phrase(String.valueOf(b.getPesoNeto()), normalFont));
             }
