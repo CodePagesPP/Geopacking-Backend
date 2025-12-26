@@ -9,4 +9,5 @@ public class ScrappDTO {
     private Double pesoNeto;
     private Long typeScrappId;
     private Long origenId;
+    private String observaciones;
 }

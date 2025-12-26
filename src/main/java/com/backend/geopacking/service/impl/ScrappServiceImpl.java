@@ -78,6 +78,7 @@ public class ScrappServiceImpl implements ScrappService {
                 .operador(user)
                 .typeScrapp(typeScrapp)
                 .origen(origen)
+                .observaciones(dto.getObservaciones())
                 .build();
 
         Scrapp scrappGuardado = registroScrappRepository.save(nuevoRegistro);

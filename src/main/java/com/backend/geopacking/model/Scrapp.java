@@ -59,4 +59,7 @@ public class Scrapp {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "origen_id", nullable = true)
     private Origen origen;
+
+    @Column(length = 500)
+    private String observaciones;
 }

@@ -38,6 +38,7 @@ public class EtiquetaServiceImpl implements EtiquetaService {
         double pesoBruto = registro.getPesoBruto();
         double pesoNeto = registro.getPesoNeto();
         String origenStr = registro.getOrigen().getCode();
+        String observacionesStr = (registro.getObservaciones() != null) ? registro.getObservaciones() : "";
         if (maquina instanceof Molino) {
             Molino molino = (Molino) maquina;
 
@@ -133,14 +134,16 @@ public class EtiquetaServiceImpl implements EtiquetaService {
                 "OPERADOR:", operador, fontValue, fontValue);
         mainCell.addElement(dataTable);
 
-        // --- OBSERVACIONES (Dentro de mainCell) (Sin cambios) ---
+        // --- OBSERVACIONES
         Paragraph pObs = new Paragraph("Observaciones:", fontValue);
         pObs.setSpacingBefore(3f);
         mainCell.addElement(pObs);
-        PdfPCell obsBoxCell = new PdfPCell(new Phrase(" "));
+        PdfPCell obsBoxCell = new PdfPCell(new Phrase("  " + observacionesStr, fontValue));
         obsBoxCell.setBorder(Rectangle.BOX);
         obsBoxCell.setBorderWidth(0.5f);
         obsBoxCell.setFixedHeight(15f);
+        obsBoxCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+
         PdfPTable obsTable = new PdfPTable(1);
         obsTable.setWidthPercentage(100);
         obsTable.addCell(obsBoxCell);
