@@ -5,10 +5,12 @@ import com.backend.geopacking.model.BobinaEX;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Repository
 public interface BobinaEXRepository extends JpaRepository<BobinaEX, Long> {
 
     @Query("SELECT new com.backend.geopacking.dto.BobinaHistorialDTO(" +
@@ -32,4 +34,14 @@ public interface BobinaEXRepository extends JpaRepository<BobinaEX, Long> {
             @Param("inicio") LocalDateTime inicio,
             @Param("fin") LocalDateTime fin
     );
+
+    @Query("SELECT b FROM BobinaEX b " +
+            "JOIN FETCH b.turno t " +
+            "JOIN FETCH t.ordenTrabajo ot " +
+            "JOIN FETCH ot.producto p " +
+            "ORDER BY b.id DESC")
+    List<BobinaEX> findAllWithDetails();
+
+    @Query("SELECT COALESCE(SUM(b.pesoNeto), 0) FROM BobinaEX b")
+    Double sumarPesoNetoTotal();
 }
