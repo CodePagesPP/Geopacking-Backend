@@ -1,7 +1,9 @@
 package com.backend.geopacking.controller;
 
 import com.backend.geopacking.dto.BobinaHistorialDTO;
+import com.backend.geopacking.dto.BobinaTransitoDTO;
 import com.backend.geopacking.repository.BobinaEXRepository;
+import com.backend.geopacking.service.BobinaService;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
@@ -30,6 +32,8 @@ public class BobinaController {
 
     @Autowired
     private BobinaEXRepository bobinaRepository;
+    @Autowired
+    private BobinaService bobinaService;
 
 
     @GetMapping("/historial")
@@ -142,5 +146,15 @@ public class BobinaController {
 
         document.close();
         return out.toByteArray();
+    }
+
+    @GetMapping("/transito")
+    public ResponseEntity<List<BobinaTransitoDTO>> obtenerBobinasEnTransito() {
+        return ResponseEntity.ok(bobinaService.listarBobinasEnTransito());
+    }
+
+    @GetMapping("/stock")
+    public ResponseEntity<Double> obtenerStockTotal() {
+        return ResponseEntity.ok(bobinaService.obtenerStockTotal());
     }
 }
