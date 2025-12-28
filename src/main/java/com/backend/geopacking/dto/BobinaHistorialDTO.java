@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 public class BobinaHistorialDTO {
+    private Long id;
     private LocalDateTime fecha;
     private String codigoBobina;
     private String operacion;
