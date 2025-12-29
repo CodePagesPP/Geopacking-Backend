@@ -14,4 +14,5 @@ public interface InsumoService {
     InsumoRegistroDTO registrarInsumo(InsumoRegistroDTO dto, UserDetails userDetails);
     Page<InsumoRegistroDTO> listarInsumos(int page, int size, LocalDate inicio, LocalDate fin, Long materialId);
     Double obtenerStockMaterial(Long materialId);
+    void registrarSalidaAutomatica(Long materialId, Double cantidad);
 }

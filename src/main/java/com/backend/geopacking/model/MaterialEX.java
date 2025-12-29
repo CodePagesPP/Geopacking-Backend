@@ -15,6 +15,8 @@ public class MaterialEX {
     private String nombre;
     private Double cantidadKg;
 
+    private Long materialOriginalId;
+
     @ManyToOne
     @JoinColumn(name = "turno_id")
     @JsonIgnore

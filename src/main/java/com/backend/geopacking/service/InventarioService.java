@@ -20,4 +20,5 @@ public interface InventarioService {
     private InventarioMovimientoDTO mapToDTO(InventarioMovimiento inventarioMovimiento) {
         return null;
     }
+    void registrarSalidaAutomaticaScrapp(Long typeScrappId, Double cantidad);
 }
