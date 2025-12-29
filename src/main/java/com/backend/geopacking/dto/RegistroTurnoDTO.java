@@ -20,5 +20,6 @@ public class RegistroTurnoDTO {
     public static class ScrappDTO {
         private String tipo;
         private Double cantidad;
+        private Long typeScrappId;
     }
 }

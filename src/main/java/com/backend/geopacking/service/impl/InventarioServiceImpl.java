@@ -20,6 +20,7 @@ import java.text.DecimalFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -137,6 +138,32 @@ public class InventarioServiceImpl implements InventarioService {
         }
 
         return dto;
+    }
+
+    @Override
+    public void registrarSalidaAutomaticaScrapp(Long typeScrappId, Double cantidad) {
+        TypeScrapp tipo = typeScrappRepository.findById(typeScrappId)
+                .orElseThrow(() -> new RuntimeException("Tipo de Scrapp no encontrado"));
+
+        Motivo motivoProd = motivoRepository.findByNombreIgnoreCase("PRODUCCION")
+                .orElseThrow(() -> new RuntimeException("Motivo PRODUCCION no existe"));
+
+        String codigoGen = "SAL-PROD-" + System.currentTimeMillis();
+
+        InventarioMovimiento movimiento = InventarioMovimiento.builder()
+                .codigoMovimiento(codigoGen)
+                .operacion(Operacion.SALIDA)
+                .tipoRegistro(TipoRegistro.PRODUCCION)
+                .cantidad(cantidad)
+                .fecha(LocalDate.now())
+                .fechaRegistro(LocalDateTime.now())
+                .typeScrapp(tipo)
+                .motivo(motivoProd)
+                .registradoPor(null)
+                .nota("Consumo automático por Producción")
+                .build();
+
+        inventarioRepository.save(movimiento);
     }
 
     @Override
