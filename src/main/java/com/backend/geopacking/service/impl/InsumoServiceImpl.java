@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -76,6 +77,29 @@ public class InsumoServiceImpl implements InsumoService {
     @Override
     public Double obtenerStockMaterial(Long materialId) {
         return insumoRepository.calcularStockPorMaterial(materialId);
+    }
+
+    @Override
+    @Transactional
+    public void registrarSalidaAutomatica(Long materialId, Double cantidad) {
+        Material material = materialRepository.findById(materialId)
+                .orElseThrow(() -> new RuntimeException("Material no encontrado"));
+
+        Motivo motivoProduccion = motivoRepository.findByNombreIgnoreCase("PRODUCCION")
+                .orElseThrow(() -> new RuntimeException("Motivo 'PRODUCCION' no configurado en BD"));
+
+        RegistroInsumo salida = RegistroInsumo.builder()
+                .material(material)
+                .cantidad(cantidad)
+                .operacion(Operacion.SALIDA)
+                .tipoRegistro(TipoRegistro.PRODUCCION)
+                .fecha(LocalDate.now())
+                .fechaRegistro(LocalDateTime.now())
+                .motivo(motivoProduccion)
+                .registradoPor(null)
+                .build();
+
+        insumoRepository.save(salida);
     }
 
     private InsumoRegistroDTO mapToDTO(RegistroInsumo entidad) {

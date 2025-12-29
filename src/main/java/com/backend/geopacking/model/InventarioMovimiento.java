@@ -45,7 +45,7 @@ public class InventarioMovimiento {
     private Scrapp scrappReferencia;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "registrado_por_id", nullable = false)
+    @JoinColumn(name = "registrado_por_id", nullable = true)
     private User registradoPor;
 
     @ManyToOne(fetch = FetchType.LAZY)
