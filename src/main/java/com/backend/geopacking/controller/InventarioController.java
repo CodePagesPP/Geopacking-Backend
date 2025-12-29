@@ -16,6 +16,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -58,6 +61,35 @@ public class InventarioController {
 
         Page<InventarioMovimientoDTO> historial = inventarioService.listarMovimientos(fechaInicio, fechaFin, typeScrappId,pageable);
         return ResponseEntity.ok(historial);
+    }
+
+    @GetMapping("/reporte-pdf")
+    public ResponseEntity<byte[]> generarReporteMovimientosPdf(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) Long typeScrappId) {
+        try {
+
+            List<InventarioMovimientoDTO> lista = inventarioService.listarMovimientosReporte(fechaInicio, fechaFin, typeScrappId);
+
+
+            String rangoFechas = (fechaInicio != null ? fechaInicio.toString() : "INICIO") + " al " +
+                    (fechaFin != null ? fechaFin.toString() : "HOY");
+            String filtroInfo = (typeScrappId != null) ? "FILTRADO POR TIPO ID: " + typeScrappId : "TODOS LOS TIPOS";
+
+
+            byte[] pdfBytes = inventarioService.generarPdfDisenoImagen(lista, rangoFechas, filtroInfo);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "Reporte_Inventario_Movimientos.pdf");
+
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @GetMapping("/stock")

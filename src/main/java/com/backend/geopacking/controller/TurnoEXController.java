@@ -14,6 +14,8 @@ import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
 import java.io.ByteArrayOutputStream;
 import org.springframework.http.*;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -147,7 +149,7 @@ public class TurnoEXController {
     private byte[] generarPdfInterno(TurnoEX turno, OrdenTrabajoEX ot, String usuarioResponsable) throws DocumentException {
         Document document = new Document(PageSize.A4);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        PdfWriter.getInstance(document, out);
+        PdfWriter writer = PdfWriter.getInstance(document, out);
 
         document.open();
 
@@ -251,11 +253,11 @@ public class TurnoEXController {
             PdfPTable tablaScrapp = new PdfPTable(2);
             tablaScrapp.setWidthPercentage(100);
 
-            // Encabezados
+
             addHeaderCell(tablaScrapp, "Tipo");
             addHeaderCell(tablaScrapp, "Cantidad (Kg)");
 
-            // Datos
+
             for (ScrappEX s : turno.getScrapps()) {
                 tablaScrapp.addCell(new Phrase(s.getTipo(), normalFont));
                 tablaScrapp.addCell(new Phrase(String.valueOf(s.getCantidad()), normalFont));
@@ -267,9 +269,9 @@ public class TurnoEXController {
 
 
 
-        document.add(new Paragraph(" ")); // Espacio separador
+        document.add(new Paragraph(" "));
 
-        // --- CÁLCULOS PARA LA TABLA DE BALANCE ---
+
         double totalMaterialKg = 0;
         if (turno.getMateriales() != null) {
             totalMaterialKg = turno.getMateriales().stream()
@@ -285,7 +287,7 @@ public class TurnoEXController {
 
         double totalBalanceKg = totalMaterialKg + totalScrappKg;
 
-        // --- CREACIÓN DE LA TABLA PDF ---
+
         document.add(new Paragraph("Balance de Turno:", boldFont));
         document.add(new Paragraph(" "));
 
@@ -332,8 +334,148 @@ public class TurnoEXController {
         if(turno.getComentarios() != null){
             document.add(new Paragraph("Observaciones: " + turno.getComentarios(), normalFont));
         }
+
+        if (turno.getBobinas() != null && !turno.getBobinas().isEmpty()) {
+            for (BobinaEX bobina : turno.getBobinas()) {
+
+                agregarPaginaBobina(writer, document, bobina, ot, usuarioResponsable);
+            }
+        }
         document.close();
         return out.toByteArray();
+    }
+
+
+
+
+    private void agregarPaginaBobina(PdfWriter writer, Document document, BobinaEX bobina, OrdenTrabajoEX ot, String operador) throws DocumentException {
+
+
+        Font fontHeaderGrande = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
+        Font fontLabel = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
+        Font fontValue = FontFactory.getFont(FontFactory.HELVETICA, 11);
+
+
+        String valCodigoProducto = (ot.getProducto() != null) ? ot.getProducto().getCode() : "SIN CÓDIGO";
+
+        String valNombreProducto = (ot.getProducto() != null) ? ot.getProducto().getName() : "N/A";
+
+        String valCodigoOT = ot.getCodigo();
+        String valCodigoBobina = (bobina.getCodigo() != null) ? bobina.getCodigo() : "-";
+        String valPesoBruto = String.valueOf(bobina.getPesoBruto()) + " Kg";
+        String valPesoNeto = String.valueOf(bobina.getPesoNeto()) + " Kg";
+
+        DateTimeFormatter formatterFecha = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String valFecha = LocalDate.now().format(formatterFecha);
+
+
+        String valTurno = (bobina.getTurno() != null) ? String.valueOf(bobina.getTurno().getId()) : "1";
+
+        String valMaquina = (ot.getMaquina() != null) ? ot.getMaquina().getCodigo() : "N/A";
+        String valOperador = operador;
+
+
+        PdfPTable table = new PdfPTable(4);
+        table.setWidthPercentage(80);
+        table.setHorizontalAlignment(Element.ALIGN_CENTER);
+        table.setKeepTogether(true);
+        table.setSpacingAfter(20f);
+
+
+        table.setWidths(new float[]{1f, 1f, 1f, 1f});
+
+
+        PdfPCell cellCodProd = new PdfPCell(new Phrase(valCodigoProducto, fontHeaderGrande));
+        cellCodProd.setColspan(4);
+        cellCodProd.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cellCodProd.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cellCodProd.setPadding(8f);
+        table.addCell(cellCodProd);
+
+
+        PdfPCell cellNomProd = new PdfPCell(new Phrase(valNombreProducto, fontHeaderGrande));
+        cellNomProd.setColspan(4);
+        cellNomProd.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cellNomProd.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cellNomProd.setPadding(8f);
+        table.addCell(cellNomProd);
+
+
+        addCellHeader(table, "CÓDIGO OT", fontLabel);
+        addCellHeader(table, "CÓDIGO BOBINA", fontLabel);
+        addCellHeader(table, "PESO BRUTO", fontLabel);
+        addCellHeader(table, "PESO NETO", fontLabel);
+
+
+        addCellValue(table, valCodigoOT, fontValue);
+        addCellValue(table, valCodigoBobina, fontValue);
+        addCellValue(table, valPesoBruto, fontValue);
+        addCellValue(table, valPesoNeto, fontValue);
+
+
+        addCellHeader(table, "FECHA", fontLabel);
+        addCellHeader(table, "TURNO", fontLabel);
+        addCellHeader(table, "MÁQUINA", fontLabel);
+        addCellHeader(table, "OPERADOR", fontLabel);
+
+
+        addCellValue(table, valFecha, fontValue);
+        addCellValue(table, valTurno, fontValue);
+        addCellValue(table, valMaquina, fontValue);
+        addCellValue(table, valOperador, fontValue);
+
+
+        PdfPCell cellBarcode = new PdfPCell();
+        cellBarcode.setColspan(4);
+        cellBarcode.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cellBarcode.setPadding(10f);
+        cellBarcode.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cellBarcode.setMinimumHeight(50f);
+        try {
+            PdfContentByte cb = writer.getDirectContent();
+            Barcode128 code128 = new Barcode128();
+
+
+            String codigoParaBarras = (valCodigoBobina != null && !valCodigoBobina.equals("-")) ? valCodigoBobina : "000000";
+
+            code128.setCode(codigoParaBarras);
+            code128.setCodeType(Barcode128.CODE128);
+            code128.setBarHeight(35f);
+            code128.setFont(null);
+
+            com.itextpdf.text.Image image128 = code128.createImageWithBarcode(cb, null, null);
+
+
+            cellBarcode.addElement(image128);
+
+        } catch (Exception e) {
+            cellBarcode.addElement(new Phrase("ERROR BARCODE"));
+        }
+
+        table.addCell(cellBarcode);
+
+
+        document.add(table);
+    }
+
+
+    private void addCellHeader(PdfPTable table, String text, Font font) {
+        PdfPCell cell = new PdfPCell(new Phrase(text, font));
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+
+        cell.setPadding(5f);
+        table.addCell(cell);
+    }
+
+
+    private void addCellValue(PdfPTable table, String text, Font font) {
+        PdfPCell cell = new PdfPCell(new Phrase(text, font));
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cell.setPadding(5f);
+        cell.setMinimumHeight(20f);
+        table.addCell(cell);
     }
 
 
