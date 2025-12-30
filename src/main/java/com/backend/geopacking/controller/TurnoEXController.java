@@ -6,6 +6,7 @@ import com.backend.geopacking.repository.OrdenTrabajoEXRepository;
 import com.backend.geopacking.repository.TurnoEXRepository;
 import com.backend.geopacking.service.InsumoService;
 import com.backend.geopacking.service.InventarioService;
+import com.backend.geopacking.service.TurnoEXService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,110 +27,23 @@ import java.util.List;
 public class TurnoEXController {
 
     @Autowired
-    private OrdenTrabajoEXRepository otRepository;
-    @Autowired
     private TurnoEXRepository turnoRepository;
+
+
     @Autowired
-    private InsumoService insumoService;
-    @Autowired
-    private InventarioService inventarioService;
+    private TurnoEXService turnoService;
 
     @PostMapping("/finalizar")
-    @Transactional
+
     public ResponseEntity<byte[]> finalizarTurno(@RequestBody RegistroTurnoDTO dto) {
-
-        // 1. Buscar la Orden de Trabajo
-        OrdenTrabajoEX ot = otRepository.findById(dto.getOtId())
-                .orElseThrow(() -> new RuntimeException("OT no encontrada"));
-
-        // 2. Crear el Turno
-        TurnoEX turno = new TurnoEX();
-        turno.setFechaHoraFin(LocalDateTime.now());
-        turno.setOrdenTrabajo(ot);
-        turno.setComentarios(dto.getComentarios());
-        turno.setUsuarioNombre(dto.getUsuarioNombre());
-
-        // 3. Procesar Bobinas y calcular Total Kilos
-        double totalKilos = 0; // Variable local segura
-        List<BobinaEX> bobinas = dto.getBobinas();
-        if (bobinas != null) {
-            for (BobinaEX b : bobinas) {
-                b.setTurno(turno);
-                totalKilos += b.getPesoNeto();
-            }
-        }
-        turno.setBobinas(bobinas);
-        turno.setCantidadBobinas(bobinas != null ? bobinas.size() : 0);
-        turno.setTotalKilosProducidos(totalKilos); // Guardamos en el objeto
-
-        // 4. Procesar Materiales
-        List<MaterialEX> materiales = dto.getMateriales();
-        if (materiales != null) {
-            for (MaterialEX m : materiales) {
-                m.setTurno(turno);
-
-                if (m.getMaterialOriginalId() != null && m.getCantidadKg() > 0) {
-                    try {
-                        insumoService.registrarSalidaAutomatica(
-                                m.getMaterialOriginalId(),
-                                m.getCantidadKg()
-                        );
-                    } catch (Exception e) {
-                        System.err.println("Error descontando insumo: " + e.getMessage());
-                    }
-                }
-            }
-        }
-        turno.setMateriales(materiales);
-
-        // 5. Procesar Scrapp
-        List<ScrappEX> listaScrappParaGuardar = new ArrayList<>();
-
-        if (dto.getScrapp() != null) {
-            for (RegistroTurnoDTO.ScrappDTO sDto : dto.getScrapp()) { // Asegúrate de usar el DTO correcto
-                ScrappEX s = new ScrappEX();
-                s.setTipo(sDto.getTipo());
-                s.setCantidad(sDto.getCantidad());
-                s.setTurno(turno);
-
-                if (sDto.getTypeScrappId() != null && sDto.getCantidad() > 0) {
-                    s.setTypeScrappOriginalId(sDto.getTypeScrappId()); // Guardamos en BD
-
-                    try {
-                        inventarioService.registrarSalidaAutomaticaScrapp(
-                                sDto.getTypeScrappId(),
-                                sDto.getCantidad()
-                        );
-                    } catch (Exception e) {
-                        System.err.println("Error descontando Scrapp: " + e.getMessage());
-                    }
-                }
-
-                listaScrappParaGuardar.add(s);
-            }
-        }
-        turno.setScrapps(listaScrappParaGuardar);
-
-        // 6. ACTUALIZAR ESTADO Y ACUMULADOS (Aquí estaba el error)
-        // Usamos 'totalKilos' (local) en vez de turno.getTotalKilosProducidos() para evitar nulos
-        double producidoAnterior = ot.getProducidoKg() == null ? 0 : ot.getProducidoKg();
-        double acumuladoActual = producidoAnterior + totalKilos;
-
-        ot.setProducidoKg(acumuladoActual);
-
-        // Lógica de cambio de estado
-        if (acumuladoActual >= ot.getRequerimientoKg()) {
-            ot.setEstado(EstadoOT_EX.COMPLETADO);
-        } else {
-            ot.setEstado(EstadoOT_EX.EN_PROCESO);
-        }
-
-        // 7. Guardar en Base de Datos
-        otRepository.save(ot);
-        TurnoEX turnoGuardado = turnoRepository.save(turno);
-
-        // 8. Generar PDF
         try {
+
+            TurnoEX turnoGuardado = turnoService.guardarTurno(dto);
+
+
+            OrdenTrabajoEX ot = turnoGuardado.getOrdenTrabajo();
+
+
             byte[] pdfBytes = generarPdfInterno(turnoGuardado, ot, dto.getUsuarioNombre());
 
             HttpHeaders headers = new HttpHeaders();
@@ -139,8 +53,9 @@ public class TurnoEXController {
 
             return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
 
-        } catch (DocumentException e) {
+        } catch (Exception e) {
             e.printStackTrace();
+
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
