@@ -155,67 +155,111 @@ public class InventarioServiceImpl implements InventarioService {
 
     @Override
     public byte[] generarPdfDisenoImagen(List<InventarioMovimientoDTO> lista, String rangoFechas, String filtroInfo) throws DocumentException {
-        Document document = new Document(PageSize.A4);
+
+        Document document = new Document(PageSize.A4, 20, 20, 20, 20); // Márgenes reducidos
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         PdfWriter.getInstance(document, out);
 
         document.open();
 
 
-        Font fontEmpresa = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
-        Font fontSubtitulo = FontFactory.getFont(FontFactory.HELVETICA, 10);
-        Font fontLabel = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9);
-        Font fontValue = FontFactory.getFont(FontFactory.HELVETICA, 9);
+        Font fontEmpresa = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16);
+        Font fontLabel = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
+        Font fontValue = FontFactory.getFont(FontFactory.HELVETICA, 8);
         Font fontHeaderTabla = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9);
         Font fontCuerpoTabla = FontFactory.getFont(FontFactory.HELVETICA, 9);
 
 
-        PdfPTable headerTable = new PdfPTable(3);
-        headerTable.setWidthPercentage(100);
-        headerTable.setWidths(new float[]{1, 2, 1});
-
-        headerTable.addCell(crearCeldaSinBorde("", fontSubtitulo, Element.ALIGN_LEFT)); // Vacío
-        headerTable.addCell(crearCeldaSinBorde("GEOPACKING S.A.C.", fontEmpresa, Element.ALIGN_CENTER));
-
-        String fechaImpresion = java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
-        headerTable.addCell(crearCeldaSinBorde(fechaImpresion, fontSubtitulo, Element.ALIGN_RIGHT));
-
-        document.add(headerTable);
-        document.add(new Paragraph(" "));
+        InventarioMovimientoDTO headerData = lista.isEmpty() ? new InventarioMovimientoDTO() : lista.get(0);
 
 
-        PdfPTable infoTable = new PdfPTable(3);
+
+        DateTimeFormatter dtfFecha = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String valFechaMov = LocalDate.now().format(dtfFecha);
+
+        String valAlmacen = "ALMACÉN TRANSITO EX";
+        String valMovimiento = (headerData.getOperacion() != null) ? headerData.getOperacion().toString() : "INGRESO/SALIDA";
+        String valNumMov = (headerData.getId() != null) ? String.valueOf(headerData.getId()) : "123";
+        String valComentarios = (headerData.getNota() != null) ? headerData.getNota() : "";
+
+        String valUsuario = (headerData.getRegistradoPorNombre() != null) ? headerData.getRegistradoPorNombre() : "ADMIN";
+        String valMotivo = (headerData.getMotivoNombre() != null) ? headerData.getMotivoNombre() : "-";
+
+
+
+        Paragraph titulo = new Paragraph("GEOPACKING SAC", fontEmpresa);
+        titulo.setAlignment(Element.ALIGN_CENTER);
+        titulo.setSpacingAfter(15f);
+        document.add(titulo);
+
+
+        PdfPTable infoTable = new PdfPTable(8);
         infoTable.setWidthPercentage(100);
 
 
-        infoTable.addCell(crearCeldaInfo("LOCAL:", "PLANTA PRINCIPAL", fontLabel, fontValue));
-        infoTable.addCell(crearCeldaInfo("FECHA FILTRO:", rangoFechas, fontLabel, fontValue));
-        infoTable.addCell(crearCeldaInfo("REPORTE:", "HISTORIAL KARDEX", fontLabel, fontValue));
+        infoTable.setWidths(new float[]{2.5f, 4f, 2.5f, 3f, 1.5f, 1.5f, 3f, 4f});
 
 
-        infoTable.addCell(crearCeldaInfo("MOVIMIENTO:", "ENTRADAS / SALIDAS", fontLabel, fontValue));
-        infoTable.addCell(crearCeldaInfo("USUARIO:", "ADMINISTRADOR", fontLabel, fontValue)); // O el usuario actual
-        infoTable.addCell(crearCeldaInfo("FILTRO:", filtroInfo, fontLabel, fontValue));
+        addCellHeaderInfo(infoTable, "ALMACÉN", fontLabel);
+        addCellHeaderInfo(infoTable, valAlmacen, fontValue);
+
+
+        addCellHeaderInfo(infoTable, "MOVIMIENTO", fontLabel);
+        addCellHeaderInfo(infoTable, valMovimiento, fontValue);
+
+
+        addCellHeaderInfo(infoTable, "N° MOV", fontLabel);
+        addCellHeaderInfo(infoTable, valNumMov, fontValue);
+
+
+        addCellHeaderInfo(infoTable, "COMENTARIOS", fontLabel);
+        addCellHeaderInfo(infoTable, valComentarios, fontValue);
+
+
+        addCellHeaderInfo(infoTable, "USUARIO", fontLabel);
+        addCellHeaderInfo(infoTable, valUsuario, fontValue);
+
+
+        addCellHeaderInfo(infoTable, "FECHA DEL MOV.", fontLabel);
+        addCellHeaderInfo(infoTable, valFechaMov, fontValue);
+
+
+        addCellHeaderInfo(infoTable, "MOTIVO", fontLabel);
+        addCellHeaderInfo(infoTable, valMotivo, fontValue);
+
+
+        addCellHeaderInfo(infoTable, "", fontLabel);
+        addCellHeaderInfo(infoTable, "", fontValue);
 
         document.add(infoTable);
         document.add(new Paragraph(" "));
 
+
         Paragraph tituloTabla = new Paragraph("DETALLES DEL MOVIMIENTO", fontLabel);
         tituloTabla.setAlignment(Element.ALIGN_CENTER);
+        tituloTabla.setSpacingAfter(5f);
         document.add(tituloTabla);
-        document.add(new Paragraph(" "));
 
 
         PdfPTable table = new PdfPTable(6);
         table.setWidthPercentage(100);
-        table.setWidths(new float[]{1f, 2f, 2f, 2f, 5f, 2f});
+
+        table.setWidths(new float[]{1f, 2f, 2f, 2f, 4.5f, 2.5f});
 
 
-        String[] headers = {"ITEM", "FECHA REG", "CÓDIGO", "OPERACIÓN", "DESCRIPCIÓN (SCRAPP/MOTIVO)", "CANTIDAD"};
+        String[] headers = {"ITEM", "FECHA REG", "CÓDIGO", "OPERACIÓN", "SCRAPP / MOTIVO", "CANTIDAD"};
+
         for (String h : headers) {
             PdfPCell cell = new PdfPCell(new Phrase(h, fontHeaderTabla));
+
+
             cell.setBorder(Rectangle.TOP | Rectangle.BOTTOM);
-            cell.setBorderWidth(1.2f);
+
+            cell.setBorderWidthTop(1.5f);
+            cell.setBorderWidthBottom(1.5f);
+            cell.setBorderWidthLeft(0);
+            cell.setBorderWidthRight(0);
+
             cell.setPaddingTop(5);
             cell.setPaddingBottom(5);
             cell.setHorizontalAlignment(Element.ALIGN_CENTER);
@@ -225,40 +269,37 @@ public class InventarioServiceImpl implements InventarioService {
 
         int item = 1;
         DecimalFormat df = new DecimalFormat("#,##0.00");
-        DateTimeFormatter dtfFecha = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
         for (InventarioMovimientoDTO mov : lista) {
 
-            addDataCell(table, String.valueOf(item++), fontCuerpoTabla, Element.ALIGN_CENTER);
+            addDataCellClean(table, String.valueOf(item++), fontCuerpoTabla, Element.ALIGN_CENTER);
 
+            String fechaRegStr = mov.getFechaRegistro() != null ? mov.getFechaRegistro().format(dtfFecha) : "-";
+            addDataCellClean(table, fechaRegStr, fontCuerpoTabla, Element.ALIGN_CENTER);
 
-            String fechaStr = mov.getFechaRegistro() != null ? mov.getFechaRegistro().format(dtfFecha) : "-";
-            addDataCell(table, fechaStr, fontCuerpoTabla, Element.ALIGN_CENTER);
-
-
-            addDataCell(table, mov.getCodigoMovimiento(), fontCuerpoTabla, Element.ALIGN_CENTER);
-
+            addDataCellClean(table, mov.getCodigoMovimiento(), fontCuerpoTabla, Element.ALIGN_CENTER);
 
             String op = mov.getOperacion() != null ? mov.getOperacion().toString() : "-";
-            addDataCell(table, op, fontCuerpoTabla, Element.ALIGN_CENTER);
+            addDataCellClean(table, op, fontCuerpoTabla, Element.ALIGN_CENTER);
 
+            String desc = (mov.getTypeScrappNombre() != null ? mov.getTypeScrappNombre() : "-");
+            addDataCellClean(table, desc, fontCuerpoTabla, Element.ALIGN_LEFT);
 
-            String desc = (mov.getTypeScrappNombre() != null ? mov.getTypeScrappNombre() : "") +
-                    " - " +
-                    (mov.getMotivoNombre() != null ? mov.getMotivoNombre() : "");
-            addDataCell(table, desc, fontCuerpoTabla, Element.ALIGN_LEFT);
-
-
-            addDataCell(table, df.format(mov.getCantidad()) + " KG", fontCuerpoTabla, Element.ALIGN_RIGHT);
+            addDataCellClean(table, df.format(mov.getCantidad()) + " KG", fontCuerpoTabla, Element.ALIGN_RIGHT);
         }
+
+
+        PdfPCell lineaFinal = new PdfPCell();
+        lineaFinal.setColspan(6);
+        lineaFinal.setBorder(Rectangle.TOP);
+        lineaFinal.setBorderWidthTop(1.5f);
+        table.addCell(lineaFinal);
 
         document.add(table);
 
 
         document.add(new Paragraph(" "));
         document.add(new Paragraph(" "));
-        document.add(new Paragraph(" "));
-
         Paragraph footer = new Paragraph("----------------------------------------\nCONFIRMADO", fontValue);
         footer.setAlignment(Element.ALIGN_CENTER);
         document.add(footer);
@@ -268,28 +309,26 @@ public class InventarioServiceImpl implements InventarioService {
     }
 
 
-    private PdfPCell crearCeldaSinBorde(String text, Font font, int align) {
+    private void addCellHeaderInfo(PdfPTable table, String text, Font font) {
         PdfPCell cell = new PdfPCell(new Phrase(text, font));
         cell.setBorder(Rectangle.NO_BORDER);
-        cell.setHorizontalAlignment(align);
-        return cell;
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPaddingBottom(5f);
+        table.addCell(cell);
     }
 
-    private PdfPCell crearCeldaInfo(String label, String value, Font fLabel, Font fValue) {
-        Phrase phrase = new Phrase();
-        phrase.add(new Chunk(label + " ", fLabel));
-        phrase.add(new Chunk(value, fValue));
-        PdfPCell cell = new PdfPCell(phrase);
-        cell.setBorder(Rectangle.NO_BORDER);
-        cell.setPadding(3);
-        return cell;
-    }
 
-    private void addDataCell(PdfPTable table, String text, Font font, int align) {
+    private void addDataCellClean(PdfPTable table, String text, Font font, int alignment) {
         PdfPCell cell = new PdfPCell(new Phrase(text, font));
+        cell.setHorizontalAlignment(alignment);
+        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cell.setPaddingTop(4f);
+        cell.setPaddingBottom(4f);
+
+
         cell.setBorder(Rectangle.NO_BORDER);
-        cell.setHorizontalAlignment(align);
-        cell.setPadding(5);
+
+
         table.addCell(cell);
     }
 }
