@@ -4,6 +4,8 @@ import com.backend.geopacking.dto.RegistroTurnoDTO;
 import com.backend.geopacking.model.*;
 import com.backend.geopacking.repository.OrdenTrabajoEXRepository;
 import com.backend.geopacking.repository.TurnoEXRepository;
+import com.backend.geopacking.service.InsumoService;
+import com.backend.geopacking.service.InventarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +29,10 @@ public class TurnoEXController {
     private OrdenTrabajoEXRepository otRepository;
     @Autowired
     private TurnoEXRepository turnoRepository;
+    @Autowired
+    private InsumoService insumoService;
+    @Autowired
+    private InventarioService inventarioService;
 
     @PostMapping("/finalizar")
     @Transactional
@@ -61,19 +67,43 @@ public class TurnoEXController {
         if (materiales != null) {
             for (MaterialEX m : materiales) {
                 m.setTurno(turno);
+
+                if (m.getMaterialOriginalId() != null && m.getCantidadKg() > 0) {
+                    try {
+                        insumoService.registrarSalidaAutomatica(
+                                m.getMaterialOriginalId(),
+                                m.getCantidadKg()
+                        );
+                    } catch (Exception e) {
+                        System.err.println("Error descontando insumo: " + e.getMessage());
+                    }
+                }
             }
         }
         turno.setMateriales(materiales);
 
-        // 5. Procesar Scrapp (Usando la lógica unidireccional que definimos)
+        // 5. Procesar Scrapp
         List<ScrappEX> listaScrappParaGuardar = new ArrayList<>();
 
         if (dto.getScrapp() != null) {
-            for (RegistroTurnoDTO.ScrappDTO sDto : dto.getScrapp()) {
+            for (RegistroTurnoDTO.ScrappDTO sDto : dto.getScrapp()) { // Asegúrate de usar el DTO correcto
                 ScrappEX s = new ScrappEX();
-                s.setTipo(sDto.getTipo());         // Guardamos el nombre (Ej: S1)
-                s.setCantidad(sDto.getCantidad()); // Guardamos los Kg
-                s.setTurno(turno);                 // Vinculamos al turno
+                s.setTipo(sDto.getTipo());
+                s.setCantidad(sDto.getCantidad());
+                s.setTurno(turno);
+
+                if (sDto.getTypeScrappId() != null && sDto.getCantidad() > 0) {
+                    s.setTypeScrappOriginalId(sDto.getTypeScrappId()); // Guardamos en BD
+
+                    try {
+                        inventarioService.registrarSalidaAutomaticaScrapp(
+                                sDto.getTypeScrappId(),
+                                sDto.getCantidad()
+                        );
+                    } catch (Exception e) {
+                        System.err.println("Error descontando Scrapp: " + e.getMessage());
+                    }
+                }
 
                 listaScrappParaGuardar.add(s);
             }

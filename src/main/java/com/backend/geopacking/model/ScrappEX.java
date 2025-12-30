@@ -13,8 +13,10 @@ public class ScrappEX {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String tipo;      // Aquí guardaremos el nombre (Ej: "S1" o "Purga")
-    private Double cantidad;  // Aquí guardaremos los Kg (Ej: 10.5)
+    private String tipo;
+    private Double cantidad;
+
+    private Long typeScrappOriginalId;
 
     @ManyToOne
     @JoinColumn(name = "turno_id")

@@ -55,6 +55,6 @@ public class RegistroInsumo {
     private Material material;
 
     @ManyToOne
-    @JoinColumn(name = "usuario_id", nullable = false)
+    @JoinColumn(name = "usuario_id", nullable = true)
     private User registradoPor;
 }

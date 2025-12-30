@@ -22,6 +22,10 @@ public interface InventarioService {
     private InventarioMovimientoDTO mapToDTO(InventarioMovimiento inventarioMovimiento) {
         return null;
     }
+
     List<InventarioMovimientoDTO> listarMovimientosReporte(LocalDate inicio, LocalDate fin, Long typeScrappId);
     public byte[] generarPdfDisenoImagen(List<InventarioMovimientoDTO> lista, String rangoFechas, String filtroInfo) throws DocumentException;
+
+    void registrarSalidaAutomaticaScrapp(Long typeScrappId, Double cantidad);
+
 }
