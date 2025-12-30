@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
@@ -141,6 +142,7 @@ public class InventarioServiceImpl implements InventarioService {
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void registrarSalidaAutomaticaScrapp(Long typeScrappId, Double cantidad) {
         TypeScrapp tipo = typeScrappRepository.findById(typeScrappId)
                 .orElseThrow(() -> new RuntimeException("Tipo de Scrapp no encontrado"));

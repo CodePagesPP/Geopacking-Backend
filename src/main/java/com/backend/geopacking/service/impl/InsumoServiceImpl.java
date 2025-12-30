@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -80,7 +81,7 @@ public class InsumoServiceImpl implements InsumoService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void registrarSalidaAutomatica(Long materialId, Double cantidad) {
         Material material = materialRepository.findById(materialId)
                 .orElseThrow(() -> new RuntimeException("Material no encontrado"));
