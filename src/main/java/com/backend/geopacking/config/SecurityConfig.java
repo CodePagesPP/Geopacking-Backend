@@ -58,6 +58,7 @@ public class SecurityConfig {
                                 "/insumos/**",
                                 "/inventario/**",
                                 "/orden-trabajo-ex/**",
+                                "/orden-trabajo-tf/**",
                                 "/reportes/**",
                                 "/users/**",
                                 "/turno-ex/**",
