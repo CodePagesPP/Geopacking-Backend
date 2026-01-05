@@ -15,26 +15,39 @@ import java.util.Optional;
 public interface BobinaEXRepository extends JpaRepository<BobinaEX, Long> {
 
     @Query("SELECT new com.backend.geopacking.dto.BobinaHistorialDTO(" +
-            "t.id, t.fechaHoraFin, b.codigo, ot.codigo, p.code, t.usuarioNombre, b.pesoBruto, b.pesoNeto) " +
+            "b.id, " +
+            "b.turno.fechaHoraFin, " +
+            "b.codigo, " +
+            "'PRODUCCION', " +
+            "b.turno.ordenTrabajo.producto.code, " +
+            "b.turno.usuarioNombre, " +
+            "b.pesoBruto, " +
+            "b.pesoNeto, " +
+            "b.turno.ordenTrabajo.producto.name, " +
+            "b.turno.ordenTrabajo.maquina.codigo, " +
+            "b.turno.ordenTrabajo.codigo" +
+            ") " +
             "FROM BobinaEX b " +
-            "JOIN b.turno t " +
-            "JOIN t.ordenTrabajo ot " +
-            "JOIN ot.producto p " +
-            "ORDER BY t.fechaHoraFin DESC")
+            "ORDER BY b.turno.fechaHoraFin DESC")
     List<BobinaHistorialDTO> obtenerHistorialCompleto();
 
     @Query("SELECT new com.backend.geopacking.dto.BobinaHistorialDTO(" +
-            "t.id, t.fechaHoraFin, b.codigo, ot.codigo, p.code, t.usuarioNombre, b.pesoBruto, b.pesoNeto) " +
+            "b.id, " +
+            "b.turno.fechaHoraFin, " +
+            "b.codigo, " +
+            "'PRODUCCION', " +
+            "b.turno.ordenTrabajo.producto.code, " +
+            "b.turno.usuarioNombre, " +
+            "b.pesoBruto, " +
+            "b.pesoNeto, " +
+            "b.turno.ordenTrabajo.producto.name, " +
+            "b.turno.ordenTrabajo.maquina.codigo, " +
+            "b.turno.ordenTrabajo.codigo" +
+            ") " +
             "FROM BobinaEX b " +
-            "JOIN b.turno t " +
-            "JOIN t.ordenTrabajo ot " +
-            "JOIN ot.producto p " +
-            "WHERE t.fechaHoraFin BETWEEN :inicio AND :fin " +
-            "ORDER BY t.fechaHoraFin DESC")
-    List<BobinaHistorialDTO> filtrarPorFechas(
-            @Param("inicio") LocalDateTime inicio,
-            @Param("fin") LocalDateTime fin
-    );
+            "WHERE b.turno.fechaHoraFin BETWEEN :inicio AND :fin " +
+            "ORDER BY b.turno.fechaHoraFin DESC")
+    List<BobinaHistorialDTO> filtrarPorFechas(@Param("inicio") LocalDateTime inicio, @Param("fin") LocalDateTime fin);
 
     @Query("SELECT b FROM BobinaEX b " +
             "JOIN FETCH b.turno t " +
@@ -47,12 +60,13 @@ public interface BobinaEXRepository extends JpaRepository<BobinaEX, Long> {
     Double sumarPesoNetoTotal();
 
     @Query("SELECT new com.backend.geopacking.dto.BobinaHistorialDTO(" +
-            "t.id, t.fechaHoraFin, b.codigo, ot.codigo, p.code, t.usuarioNombre, b.pesoBruto, b.pesoNeto) " +
-            "FROM BobinaEX b " +
-            "JOIN b.turno t " +
-            "JOIN t.ordenTrabajo ot " +
-            "JOIN ot.producto p " +
-            "WHERE b.id = :id")
+            "b.id, b.turno.fechaHoraFin, b.codigo, 'PRODUCCION', " +
+            "b.turno.ordenTrabajo.producto.code, b.turno.usuarioNombre, " +
+            "b.pesoBruto, b.pesoNeto, " +
+            "b.turno.ordenTrabajo.producto.name, " +
+            "b.turno.ordenTrabajo.maquina.codigo, " +
+            "b.turno.ordenTrabajo.codigo) " +
+            "FROM BobinaEX b WHERE b.id = :id")
     Optional<BobinaHistorialDTO> obtenerBobinaPorId(@Param("id") Long id);
 
     @Query("SELECT COUNT(b) FROM BobinaEX b WHERE b.turno.ordenTrabajo.id = :otId")

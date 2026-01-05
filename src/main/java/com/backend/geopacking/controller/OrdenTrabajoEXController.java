@@ -29,6 +29,18 @@ public class OrdenTrabajoEXController {
         return new ResponseEntity<>(lista, HttpStatus.OK);
     }
 
+    @PutMapping("/editar/{id}")
+    public ResponseEntity<OrdenTrabajoEXDTO> editarOrden(@PathVariable Long id, @RequestBody OrdenTrabajoEXDTO dto) {
+        OrdenTrabajoEXDTO ordenActualizada = ordenTrabajoEXService.editarOrden(id, dto);
+        return new ResponseEntity<>(ordenActualizada, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/eliminar/{id}")
+    public ResponseEntity<Void> eliminarOrden(@PathVariable Long id) {
+        ordenTrabajoEXService.eliminarOrden(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
 
     @GetMapping("/ot")
     public ResponseEntity<List<OrdenTrabajoEXDTO>> listarOrdenesot() {

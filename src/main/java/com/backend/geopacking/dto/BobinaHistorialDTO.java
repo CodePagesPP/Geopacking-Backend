@@ -16,4 +16,7 @@ public class BobinaHistorialDTO {
     private String operador;
     private Double pesoBruto;
     private Double pesoNeto;
+    private String nombreProducto;
+    private String codigoMaquina;
+    private String codigoOT;
 }

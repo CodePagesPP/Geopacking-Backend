@@ -18,6 +18,7 @@ import org.springframework.http.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -283,8 +284,16 @@ public class TurnoEXController {
         DateTimeFormatter formatterFecha = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         String valFecha = LocalDate.now().format(formatterFecha);
 
+        String valTurno = "2";
+        LocalTime horaActual = LocalTime.now();
+        LocalTime inicioTurno1 = LocalTime.of(7, 0);
+        LocalTime inicioTurno2 = LocalTime.of(19, 0);
+        if (!horaActual.isBefore(inicioTurno1) && horaActual.isBefore(inicioTurno2)) {
+            valTurno = "1";
+        } else {
+            valTurno = "2";
+        }
 
-        String valTurno = (bobina.getTurno() != null) ? String.valueOf(bobina.getTurno().getId()) : "1";
 
         String valMaquina = (ot.getMaquina() != null) ? ot.getMaquina().getCodigo() : "N/A";
         String valOperador = operador;

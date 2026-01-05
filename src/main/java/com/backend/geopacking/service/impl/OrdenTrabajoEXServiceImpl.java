@@ -104,6 +104,45 @@ public class OrdenTrabajoEXServiceImpl implements OrdenTrabajoEXService{
         }
     }
 
+    @Override
+    public OrdenTrabajoEXDTO editarOrden(Long id, OrdenTrabajoEXDTO dto) {
+        OrdenTrabajoEX ot = otRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("OT no encontrada con ID: " + id));
+
+
+
+        Maquina maquina = maquinaRepository.findById(dto.getMaquinaId())
+                .orElseThrow(() -> new RuntimeException("Máquina no encontrada"));
+
+        ProductoEX producto = productoRepository.findById(dto.getProductoId())
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+
+        ot.setMaquina(maquina);
+        ot.setProducto(producto);
+        ot.setRequerimientoKg(dto.getRequerimientoKg());
+
+
+        if(dto.getEstado() != null) {
+            ot.setEstado(dto.getEstado());
+        }
+
+        OrdenTrabajoEX actualizada = otRepository.save(ot);
+        return mapToDTO(actualizada);
+    }
+
+    @Override
+    public void eliminarOrden(Long id) {
+        OrdenTrabajoEX ot = otRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("OT no encontrada con ID: " + id));
+
+
+        if(ot.getEstado() == EstadoOT_EX.COMPLETADO) {
+            throw new RuntimeException("No se puede eliminar una orden completada");
+        }
+
+        otRepository.delete(ot);
+    }
+
     private OrdenTrabajoEXDTO mapToDTO(OrdenTrabajoEX entity) {
         OrdenTrabajoEXDTO dto = new OrdenTrabajoEXDTO();
 
