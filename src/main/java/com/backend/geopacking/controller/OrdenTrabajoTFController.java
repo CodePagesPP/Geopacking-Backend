@@ -44,4 +44,16 @@ public class OrdenTrabajoTFController {
         otService.actualizarPrioridades(listaOrdenada);
         return new ResponseEntity<>(HttpStatus.OK);
     }
+
+    @PutMapping("/editar/{id}")
+    public ResponseEntity<OrdenTrabajoTFDTO> editarOrden(@PathVariable Long id, @RequestBody OrdenTrabajoTFDTO dto) {
+        OrdenTrabajoTFDTO ordenActualizada = otService.actualizarOrden(id, dto);
+        return new ResponseEntity<>(ordenActualizada, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/eliminar/{id}")
+    public ResponseEntity<Void> eliminarOrden(@PathVariable Long id) {
+        otService.eliminarOrden(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
 }

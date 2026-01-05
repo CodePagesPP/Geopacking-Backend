@@ -46,6 +46,9 @@ public class RegistroInsumo {
     @JoinColumn(name = "motivo_id")
     private Motivo motivo;
 
+    @Column(columnDefinition = "TEXT")
+    private String observaciones;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TipoRegistro tipoRegistro;

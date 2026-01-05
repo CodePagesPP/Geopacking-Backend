@@ -89,6 +89,40 @@ public class OrdenTrabajoTFServiceImpl implements OrdenTrabajoTFService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public void eliminarOrden(Long idOrden) {
+        OrdenTrabajoTF ot = otRepository.findById(idOrden)
+                .orElseThrow(() -> new RuntimeException("Orden no encontrado con codigo: " + idOrden));
+
+        otRepository.delete(ot);
+    }
+
+    @Override
+    public OrdenTrabajoTFDTO actualizarOrden(Long idOrden, OrdenTrabajoTFDTO dto) {
+        OrdenTrabajoTF ot = otRepository.findById(idOrden)
+                .orElseThrow(() -> new RuntimeException("Orden no encontrado con codigo: " + idOrden));
+
+        if (dto.getMaquinaId() != null) {
+            Maquina nuevaMaquina = maquinaRepository.findById(dto.getMaquinaId())
+                    .orElseThrow(() -> new RuntimeException("Máquina no encontrada con ID: " + dto.getMaquinaId()));
+            ot.setMaquina(nuevaMaquina);
+        }
+
+        if (dto.getProductoId() != null) {
+            ProductoTF nuevoProducto = productoTFRepository.findById(dto.getProductoId())
+                    .orElseThrow(() -> new RuntimeException("Producto TF no encontrado con ID: " + dto.getProductoId()));
+            ot.setProducto(nuevoProducto);
+        }
+
+        if (dto.getRequerimientoKg() != null && dto.getRequerimientoKg() > 0) {
+            ot.setRequerimientoKg(dto.getRequerimientoKg());
+        }
+
+        OrdenTrabajoTF ordenGuardada = otRepository.save(ot);
+
+        return mapToDTO(ordenGuardada);
+    }
+
     private OrdenTrabajoTFDTO mapToDTO(OrdenTrabajoTF entity) {
         OrdenTrabajoTFDTO dto = new OrdenTrabajoTFDTO();
         dto.setId(entity.getId());
