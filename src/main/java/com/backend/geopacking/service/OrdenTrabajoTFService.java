@@ -10,4 +10,6 @@ public interface OrdenTrabajoTFService {
     List<OrdenTrabajoTFDTO> listarOrdenesPrioridad();
     void actualizarPrioridades(List<OrdenTrabajoTFDTO> listaOrdenada);
     List<OrdenTrabajoTFDTO> listarOrdenesPendientes();
+    void eliminarOrden(Long idOrden);
+    OrdenTrabajoTFDTO actualizarOrden(Long idOrden, OrdenTrabajoTFDTO dto);
 }

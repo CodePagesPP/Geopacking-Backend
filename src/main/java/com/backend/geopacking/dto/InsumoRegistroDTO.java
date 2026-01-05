@@ -14,12 +14,11 @@ public class InsumoRegistroDTO {
     private Operacion operacion;
     private LocalDate fecha;
 
-    //Para guardar en la bd
     private Long materialId;
     private Long motivoId;
     private String nuevoMotivo;
+    private String observaciones;
 
-    //Para mostrar en la tabla
     private String materialNombre;
     private String motivoNombre;
     private String registradoPorNombre;

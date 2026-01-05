@@ -56,6 +56,7 @@ public class InsumoServiceImpl implements InsumoService {
                 .cantidad(dto.getCantidad())
                 .material(material)
                 .motivo(motivo)
+                .observaciones(dto.getObservaciones())
                 .tipoRegistro(TipoRegistro.MANUAL)
                 .registradoPor(usuario)
                 .build();
@@ -97,6 +98,7 @@ public class InsumoServiceImpl implements InsumoService {
                 .fecha(LocalDate.now())
                 .fechaRegistro(LocalDateTime.now())
                 .motivo(motivoProduccion)
+                .observaciones("Consumo automático generado por Producción")
                 .registradoPor(null)
                 .build();
 
@@ -111,6 +113,7 @@ public class InsumoServiceImpl implements InsumoService {
         dto.setOperacion(entidad.getOperacion());
         dto.setCantidad(entidad.getCantidad());
         dto.setTipoRegistro(entidad.getTipoRegistro());
+        dto.setObservaciones(entidad.getObservaciones());
 
         if (entidad.getMaterial() != null) {
             dto.setMaterialId(entidad.getMaterial().getId());
