@@ -99,9 +99,12 @@ public class ScrappServiceImpl implements ScrappService {
 
     private String obtenerTurnoActual() {
         int hora = LocalTime.now().getHour();
-        if (hora < 14) return "M";
-        else if (hora < 22) return "T";
-        else return "N";
+
+        if (hora >= 7 && hora < 19) {
+            return "1";
+        } else {
+            return "2";
+        }
     }
 
 

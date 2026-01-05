@@ -16,8 +16,8 @@ public interface ScrappService {
     List<Scrapp> obtenerTodos();
 
     Scrapp obtenerPorId(Long id);
-    public byte[] generarReporteCompletoPdf(LocalDate fechaInicio, LocalDate fechaFin);
-    public PaginatedScrappReportDTO obtenerReporteAdmin(Pageable pageable,
+    byte[] generarReporteCompletoPdf(LocalDate fechaInicio, LocalDate fechaFin);
+    PaginatedScrappReportDTO obtenerReporteAdmin(Pageable pageable,
                                                         LocalDate fechaInicio,
                                                         LocalDate fechaFin,UserDetails userDetails);
 }

@@ -276,11 +276,4 @@ public class EtiquetaServiceImpl implements EtiquetaService {
         tabla.addCell(c4);
     }
 
-    // Tu método (sin cambios)
-    private String obtenerTurnoActual() {
-        int hora = LocalTime.now().getHour();
-        if (hora < 14) return "M";
-        else if (hora < 22) return "T";
-        else return "N";
-    }
 }
