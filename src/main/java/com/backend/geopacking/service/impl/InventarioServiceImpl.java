@@ -6,6 +6,7 @@ import com.backend.geopacking.model.*;
 import com.backend.geopacking.repository.InventarioMovimientoRepository;
 import com.backend.geopacking.repository.MotivoRepository;
 import com.backend.geopacking.repository.TypeScrappRepository;
+import com.backend.geopacking.repository.UserRepository;
 import com.backend.geopacking.service.InventarioService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class InventarioServiceImpl implements InventarioService {
     private final InventarioMovimientoRepository inventarioRepository;
     private final TypeScrappRepository typeScrappRepository;
     private final MotivoRepository motivoRepository;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
@@ -150,6 +152,9 @@ public class InventarioServiceImpl implements InventarioService {
         Motivo motivoProd = motivoRepository.findByNombreIgnoreCase("PRODUCCION")
                 .orElseThrow(() -> new RuntimeException("Motivo PRODUCCION no existe"));
 
+        User usuarioSistema = userRepository.findById(1L)
+                .orElseThrow(() -> new RuntimeException("Usuario Sistema (ID 1) no encontrado"));
+
         String codigoGen = "SAL-PROD-" + System.currentTimeMillis();
 
         InventarioMovimiento movimiento = InventarioMovimiento.builder()
@@ -161,7 +166,7 @@ public class InventarioServiceImpl implements InventarioService {
                 .fechaRegistro(LocalDateTime.now())
                 .typeScrapp(tipo)
                 .motivo(motivoProd)
-                .registradoPor(null)
+                .registradoPor(usuarioSistema)
                 .nota("Consumo automático por Producción")
                 .build();
 

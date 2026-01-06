@@ -7,6 +7,7 @@ import com.backend.geopacking.repository.MotivoRepository;
 import com.backend.geopacking.repository.RegistroInsumoRepository;
 import com.backend.geopacking.repository.UserRepository;
 import com.backend.geopacking.service.InsumoService;
+import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -90,6 +91,9 @@ public class InsumoServiceImpl implements InsumoService {
         Motivo motivoProduccion = motivoRepository.findByNombreIgnoreCase("PRODUCCION")
                 .orElseThrow(() -> new RuntimeException("Motivo 'PRODUCCION' no configurado en BD"));
 
+        User usuarioSistema = userRepository.findById(1L)
+                .orElseThrow(() -> new RuntimeException("Usuario Admin (ID 1) no encontrado para firmar la salida automática"));
+
         RegistroInsumo salida = RegistroInsumo.builder()
                 .material(material)
                 .cantidad(cantidad)
@@ -99,7 +103,7 @@ public class InsumoServiceImpl implements InsumoService {
                 .fechaRegistro(LocalDateTime.now())
                 .motivo(motivoProduccion)
                 .observaciones("Consumo automático generado por Producción")
-                .registradoPor(null)
+                .registradoPor(usuarioSistema)
                 .build();
 
         insumoRepository.save(salida);
@@ -130,5 +134,13 @@ public class InsumoServiceImpl implements InsumoService {
         }
 
         return dto;
+    }
+
+    @PostConstruct
+    public void init() {
+        if (motivoRepository.findByNombreIgnoreCase("PRODUCCION").isEmpty()) {
+            motivoRepository.save(Motivo.builder().nombre("PRODUCCION").build());
+            System.out.println("MOTIVO SISTEMA 'PRODUCCION' CREADO AUTOMÁTICAMENTE");
+        }
     }
 }
