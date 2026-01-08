@@ -1,18 +1,22 @@
 package com.backend.geopacking.service.impl;
 
+import com.backend.geopacking.dto.BobinaInfoDTO;
+import com.backend.geopacking.dto.HistorialCajasDTO;
 import com.backend.geopacking.dto.OrdenTrabajoTFDTO;
+import com.backend.geopacking.dto.RegistroProduccionTFDTO;
 import com.backend.geopacking.model.*;
-import com.backend.geopacking.repository.MaquinaRepository;
-import com.backend.geopacking.repository.OrdenTrabajoTFRepository;
-import com.backend.geopacking.repository.ProductoTFRepository;
-import com.backend.geopacking.repository.UserRepository;
+import com.backend.geopacking.repository.*;
 import com.backend.geopacking.service.OrdenTrabajoTFService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,6 +31,10 @@ public class OrdenTrabajoTFServiceImpl implements OrdenTrabajoTFService {
     private ProductoTFRepository productoTFRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private DetalleProduccionTFRepository detalleRepository;
+    @Autowired
+    private BobinaEXRepository bobinaRepository;
 
     @Override
     public OrdenTrabajoTFDTO crearOrden(OrdenTrabajoTFDTO dto, String dniUsuario) {
@@ -123,6 +131,110 @@ public class OrdenTrabajoTFServiceImpl implements OrdenTrabajoTFService {
         return mapToDTO(ordenGuardada);
     }
 
+    @Override
+    @Transactional
+    public List<DetalleProduccionTF> registrarAvance(List<RegistroProduccionTFDTO> dtos, String username) {
+        List<DetalleProduccionTF> listaGuardada = new ArrayList<>();
+
+        for (RegistroProduccionTFDTO dto : dtos) {
+            OrdenTrabajoTF ot = otRepository.findById(dto.getOtId())
+                    .orElseThrow(() -> new RuntimeException("Orden no encontrada: " + dto.getOtId()));
+
+            LocalTime inicio = (dto.getHoraInicio() != null && !dto.getHoraInicio().isEmpty())
+                    ? LocalTime.parse(dto.getHoraInicio()) : LocalTime.now();
+            LocalTime fin = (dto.getHoraFin() != null && !dto.getHoraFin().isEmpty())
+                    ? LocalTime.parse(dto.getHoraFin()) : LocalTime.now();
+
+            DetalleProduccionTF detalle = DetalleProduccionTF.builder()
+                    .ordenTrabajo(ot)
+                    .codigoBobina(dto.getCodigoBobina())
+                    .loteBobina(dto.getLoteBobina())
+                    .velocidad(dto.getVelocidad())
+                    .horaInicio(inicio)
+                    .horaFin(fin)
+                    .cajas(dto.getCajas())
+                    .rechazoKg(dto.getRechazoKg())
+                    .fechaRegistro(LocalDate.now())
+                    .registradoPor(username)
+                    .build();
+
+            listaGuardada.add(detalleRepository.save(detalle));
+
+            double producidoActual = (ot.getProducidoKg() != null) ? ot.getProducidoKg() : 0;
+            ot.setProducidoKg(producidoActual + dto.getCajas());
+
+            otRepository.save(ot);
+        }
+
+        return listaGuardada;
+    }
+
+    @Override
+    public BobinaInfoDTO buscarBobinaPorCodigo(String codigo) {
+        String codigoLimpio = codigo.trim();
+
+        System.out.println("Buscando bobina con código limpio: '" + codigoLimpio + "'");
+
+        BobinaEX bobina = bobinaRepository.findByCodigoIgnoreCase(codigoLimpio)
+                .orElseThrow(() -> new RuntimeException("Bobina no encontrada con código: " + codigoLimpio));
+
+        String lote = (bobina.getTurno() != null && bobina.getTurno().getOrdenTrabajo() != null) ?
+                bobina.getTurno().getOrdenTrabajo().getCodigo() : "S/L";
+
+        String nombreProd = "Desconocido";
+        if (bobina.getTurno() != null &&
+                bobina.getTurno().getOrdenTrabajo().getProducto() != null) {
+            nombreProd = bobina.getTurno().getOrdenTrabajo().getProducto().getName();
+        }
+
+        return BobinaInfoDTO.builder()
+                .id(bobina.getId())
+                .codigo(bobina.getCodigo())
+                .lote(lote)
+                .nombreProducto(nombreProd)
+                .pesoNeto(bobina.getPesoNeto())
+                .build();
+    }
+
+    @Override
+    public List<HistorialCajasDTO> listarHistorial(LocalDate inicio, LocalDate fin) {
+        Sort sort = Sort.by(Sort.Direction.DESC, "fechaRegistro", "horaFin");
+        List<DetalleProduccionTF> detalles;
+
+        if (inicio != null && fin != null) {
+            detalles = detalleRepository.findByFechaRegistroBetween(inicio, fin, sort);
+        } else {
+            detalles = detalleRepository.findAll(sort);
+        }
+
+        return detalles.stream().map(d -> {
+
+            String nombreMostrar = d.getRegistradoPor(); // Por defecto dejamos el DNI
+
+            if (d.getRegistradoPor() != null) {
+                Optional<User> usuarioOpt = userRepository.findByDni(d.getRegistradoPor());
+                if (usuarioOpt.isPresent()) {
+                    User u = usuarioOpt.get();
+                    nombreMostrar = u.getName() + " " + u.getLastName();
+                }
+            }
+
+            return HistorialCajasDTO.builder()
+                    .id(d.getId())
+                    .otId(d.getOrdenTrabajo().getId())
+                    .fecha(d.getFechaRegistro())
+                    .hora(d.getHoraFin())
+                    .otCodigo(d.getOrdenTrabajo().getCodigo())
+                    .producto(d.getOrdenTrabajo().getProducto().getName())
+                    .codigoBobina(d.getCodigoBobina())
+                    .loteBobina(d.getLoteBobina())
+                    .cajas(d.getCajas())
+                    .operador(nombreMostrar)
+                    .inicioSecuencia(1)
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
     private OrdenTrabajoTFDTO mapToDTO(OrdenTrabajoTF entity) {
         OrdenTrabajoTFDTO dto = new OrdenTrabajoTFDTO();
         dto.setId(entity.getId());
@@ -133,7 +245,6 @@ public class OrdenTrabajoTFServiceImpl implements OrdenTrabajoTFService {
         dto.setEstado(entity.getEstado());
         dto.setPrioridad(entity.getPrioridad());
 
-        // Relaciones
         if (entity.getMaquina() != null) {
             dto.setMaquinaId(entity.getMaquina().getId());
             dto.setMaquinaNombre(entity.getMaquina().getModelo());
