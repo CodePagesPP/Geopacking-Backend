@@ -1,14 +1,26 @@
 package com.backend.geopacking.controller;
 
+import com.backend.geopacking.dto.BobinaInfoDTO;
+import com.backend.geopacking.dto.HistorialCajasDTO;
 import com.backend.geopacking.dto.OrdenTrabajoTFDTO;
+import com.backend.geopacking.dto.RegistroProduccionTFDTO;
+import com.backend.geopacking.model.DetalleProduccionTF;
+import com.backend.geopacking.model.OrdenTrabajoTF;
+import com.backend.geopacking.repository.DetalleProduccionTFRepository;
+import com.backend.geopacking.repository.OrdenTrabajoTFRepository;
 import com.backend.geopacking.service.OrdenTrabajoTFService;
+import com.backend.geopacking.service.PdfTfService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -17,6 +29,12 @@ public class OrdenTrabajoTFController {
 
     @Autowired
     private OrdenTrabajoTFService otService;
+    @Autowired
+    private PdfTfService pdfService;
+    @Autowired
+    private DetalleProduccionTFRepository detalleRepository;
+    @Autowired
+    private OrdenTrabajoTFRepository otRepository;
 
     @PostMapping("/crear")
     public ResponseEntity<OrdenTrabajoTFDTO> crearOrden(@RequestBody OrdenTrabajoTFDTO dto, @AuthenticationPrincipal UserDetails userDetails) {
@@ -55,5 +73,100 @@ public class OrdenTrabajoTFController {
     public ResponseEntity<Void> eliminarOrden(@PathVariable Long id) {
         otService.eliminarOrden(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PostMapping("/avance")
+    public ResponseEntity<List<DetalleProduccionTF>> registrarAvance(@RequestBody List<RegistroProduccionTFDTO> dtos,
+                                                                     @AuthenticationPrincipal UserDetails userDetails) {
+        String username = (userDetails != null) ? userDetails.getUsername() : "ADMIN";
+
+        List<DetalleProduccionTF> guardados = otService.registrarAvance(dtos, username);
+
+        return ResponseEntity.ok(guardados);
+    }
+
+    @GetMapping("/etiquetas/{detalleId}")
+    public ResponseEntity<byte[]> descargarEtiquetas(@PathVariable Long detalleId,
+                                                     @RequestParam int inicioSecuencia) {
+        try {
+            DetalleProduccionTF detalle = detalleRepository.findById(detalleId)
+                    .orElseThrow(() -> new RuntimeException("Detalle no encontrado"));
+
+            OrdenTrabajoTF ot = detalle.getOrdenTrabajo();
+
+            byte[] pdfBytes = pdfService.generarEtiquetasPdf(ot, detalle, inicioSecuencia);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "Etiquetas_" + ot.getCodigo() + ".pdf");
+
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/reporte/{otId}")
+    public ResponseEntity<byte[]> descargarReporte(@PathVariable Long otId, @RequestParam(required = false) String observaciones) { // <--- Nuevo param
+        try {
+            OrdenTrabajoTF ot = otRepository.findById(otId)
+                    .orElseThrow(() -> new RuntimeException("OT no encontrada"));
+
+            List<DetalleProduccionTF> detalles = detalleRepository.findByOrdenTrabajoId(otId);
+
+            // Pasamos las observaciones al servicio PDF
+            byte[] pdfBytes = pdfService.generarReporteAvance(ot, detalles, observaciones);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "Reporte_" + ot.getCodigo() + ".pdf");
+
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/buscar-bobina/{codigo}")
+    public ResponseEntity<BobinaInfoDTO> buscarBobina(@PathVariable String codigo) {
+        BobinaInfoDTO info = otService.buscarBobinaPorCodigo(codigo);
+        return ResponseEntity.ok(info);
+    }
+
+    @PostMapping("/etiquetas/simular")
+    public ResponseEntity<byte[]> simularEtiquetas(@RequestBody RegistroProduccionTFDTO dto,
+                                                   @RequestParam int inicioSecuencia) {
+        try {
+            OrdenTrabajoTF ot = otRepository.findById(dto.getOtId())
+                    .orElseThrow(() -> new RuntimeException("OT no encontrada"));
+
+            DetalleProduccionTF detalleTemporal = DetalleProduccionTF.builder()
+                    .loteBobina(dto.getLoteBobina())
+                    .cajas(dto.getCajas())
+                    .build();
+
+            byte[] pdfBytes = pdfService.generarEtiquetasPdf(ot, detalleTemporal, inicioSecuencia);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "Etiquetas_Preview.pdf");
+
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/historial")
+    public ResponseEntity<List<HistorialCajasDTO>> listarHistorial(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin) {
+
+        return ResponseEntity.ok(otService.listarHistorial(fechaInicio, fechaFin));
     }
 }
