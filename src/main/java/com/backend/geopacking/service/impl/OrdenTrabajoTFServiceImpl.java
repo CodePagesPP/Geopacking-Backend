@@ -1,9 +1,6 @@
 package com.backend.geopacking.service.impl;
 
-import com.backend.geopacking.dto.BobinaInfoDTO;
-import com.backend.geopacking.dto.HistorialCajasDTO;
-import com.backend.geopacking.dto.OrdenTrabajoTFDTO;
-import com.backend.geopacking.dto.RegistroProduccionTFDTO;
+import com.backend.geopacking.dto.*;
 import com.backend.geopacking.model.*;
 import com.backend.geopacking.repository.*;
 import com.backend.geopacking.service.OrdenTrabajoTFService;
@@ -13,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +33,8 @@ public class OrdenTrabajoTFServiceImpl implements OrdenTrabajoTFService {
     private DetalleProduccionTFRepository detalleRepository;
     @Autowired
     private BobinaEXRepository bobinaRepository;
+    @Autowired
+    private InventarioCajaRepository inventarioRepository;
 
     @Override
     public OrdenTrabajoTFDTO crearOrden(OrdenTrabajoTFDTO dto, String dniUsuario) {
@@ -58,7 +58,7 @@ public class OrdenTrabajoTFServiceImpl implements OrdenTrabajoTFService {
         ot.setPrioridad(maxPrioridad == null ? 1 : maxPrioridad + 1);
 
         long correlativo = otRepository.count() + 1;
-        ot.setCodigo("OT-TF-" + String.format("%04d", correlativo));
+        ot.setCodigo("OP-TF-" + String.format("%04d", correlativo));
 
         OrdenTrabajoTF ordenGuardada = otRepository.save(ot);
 
@@ -158,7 +158,21 @@ public class OrdenTrabajoTFServiceImpl implements OrdenTrabajoTFService {
                     .registradoPor(username)
                     .build();
 
-            listaGuardada.add(detalleRepository.save(detalle));
+            DetalleProduccionTF detalleGuardado = detalleRepository.save(detalle);
+            listaGuardada.add(detalleGuardado);
+
+            if (dto.getCajas() != null && dto.getCajas() > 0) {
+                InventarioCaja inv = InventarioCaja.builder()
+                        .detalleProduccion(detalleGuardado)
+                        .loteProduccion(ot.getCodigo()) // Lote = Codigo OT
+                        .nombreProducto(ot.getProducto().getName())
+                        .cantidad(dto.getCajas())
+                        .fechaProduccion(LocalDateTime.now())
+                        .estado("EN_TF")
+                        .build();
+
+                inventarioRepository.save(inv);
+            }
 
             double producidoActual = (ot.getProducidoKg() != null) ? ot.getProducidoKg() : 0;
             ot.setProducidoKg(producidoActual + dto.getCajas());
@@ -167,6 +181,33 @@ public class OrdenTrabajoTFServiceImpl implements OrdenTrabajoTFService {
         }
 
         return listaGuardada;
+    }
+
+    @Override
+    public void enviarAProductosTerminados(Long idInventario) {
+        InventarioCaja item = inventarioRepository.findById(idInventario)
+                .orElseThrow(() -> new RuntimeException("Item no encontrado"));
+
+        item.setEstado("EN_PT");
+        inventarioRepository.save(item);
+    }
+
+    @Override
+    public List<InventarioCajaDTO> listarInventarioPorEstado(String estado) {
+
+        List<InventarioCaja> entidades = inventarioRepository.findByEstado(estado, Sort.by(Sort.Direction.DESC, "fechaProduccion"));
+
+
+        return entidades.stream()
+                .map(item -> InventarioCajaDTO.builder()
+                        .id(item.getId())
+                        .loteProduccion(item.getLoteProduccion())
+                        .nombreProducto(item.getNombreProducto())
+                        .cantidad(item.getCantidad())
+                        .fechaProduccion(item.getFechaProduccion())
+                        .estado(item.getEstado())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     @Override

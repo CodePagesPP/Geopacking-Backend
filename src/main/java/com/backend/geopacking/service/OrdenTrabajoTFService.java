@@ -1,10 +1,8 @@
 package com.backend.geopacking.service;
 
-import com.backend.geopacking.dto.BobinaInfoDTO;
-import com.backend.geopacking.dto.HistorialCajasDTO;
-import com.backend.geopacking.dto.OrdenTrabajoTFDTO;
-import com.backend.geopacking.dto.RegistroProduccionTFDTO;
+import com.backend.geopacking.dto.*;
 import com.backend.geopacking.model.DetalleProduccionTF;
+import com.backend.geopacking.model.InventarioCaja;
 import org.springframework.cglib.core.Local;
 
 import java.time.LocalDate;
@@ -21,4 +19,6 @@ public interface OrdenTrabajoTFService {
     List<DetalleProduccionTF> registrarAvance(List<RegistroProduccionTFDTO> dtos, String username);
     BobinaInfoDTO buscarBobinaPorCodigo(String codigo);
     List<HistorialCajasDTO> listarHistorial(LocalDate inicio, LocalDate fin);
+    void enviarAProductosTerminados(Long idInventario);
+    List<InventarioCajaDTO> listarInventarioPorEstado(String estado);
 }
