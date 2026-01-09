@@ -1,10 +1,8 @@
 package com.backend.geopacking.controller;
 
-import com.backend.geopacking.dto.BobinaInfoDTO;
-import com.backend.geopacking.dto.HistorialCajasDTO;
-import com.backend.geopacking.dto.OrdenTrabajoTFDTO;
-import com.backend.geopacking.dto.RegistroProduccionTFDTO;
+import com.backend.geopacking.dto.*;
 import com.backend.geopacking.model.DetalleProduccionTF;
+import com.backend.geopacking.model.InventarioCaja;
 import com.backend.geopacking.model.OrdenTrabajoTF;
 import com.backend.geopacking.repository.DetalleProduccionTFRepository;
 import com.backend.geopacking.repository.OrdenTrabajoTFRepository;
@@ -168,5 +166,22 @@ public class OrdenTrabajoTFController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin) {
 
         return ResponseEntity.ok(otService.listarHistorial(fechaInicio, fechaFin));
+    }
+
+    @GetMapping("/inventario/tf")
+    public ResponseEntity<List<InventarioCajaDTO>> listarInventarioTF() {
+
+        return ResponseEntity.ok(otService.listarInventarioPorEstado("EN_TF"));
+    }
+
+    @GetMapping("/inventario/pt")
+    public ResponseEntity<List<InventarioCajaDTO>> listarInventarioPT() {
+        return ResponseEntity.ok(otService.listarInventarioPorEstado("EN_PT"));
+    }
+
+    @PostMapping("/inventario/mover-a-pt/{id}")
+    public ResponseEntity<Void> moverAProductosTerminados(@PathVariable Long id) {
+        otService.enviarAProductosTerminados(id);
+        return ResponseEntity.ok().build();
     }
 }

@@ -55,7 +55,7 @@ public class OrdenTrabajoEXServiceImpl implements OrdenTrabajoEXService{
         ot.setPrioridad(maxPrioridad + 1);
 
         long correlativo = otRepository.count() + 1;
-        ot.setCodigo("OT-EX-" + String.format("%04d", correlativo));
+        ot.setCodigo("OP-EX-" + String.format("%04d", correlativo));
 
         OrdenTrabajoEX ordenGuardada = otRepository.save(ot);
 
