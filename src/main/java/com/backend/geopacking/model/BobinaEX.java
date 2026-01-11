@@ -23,4 +23,7 @@ public class BobinaEX {
 
     private String horaInicio;
     private String horaFin;
+
+    @Column(name = "estado")
+    private String estado = "DISPONIBLE";
 }

@@ -26,4 +26,6 @@ public class OrdenTrabajoTFDTO {
 
     private String creadaPorUsername;
     private Integer prioridad;
+
+    private String empaque;
 }

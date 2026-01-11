@@ -72,5 +72,13 @@ public interface BobinaEXRepository extends JpaRepository<BobinaEX, Long> {
     @Query("SELECT COUNT(b) FROM BobinaEX b WHERE b.turno.ordenTrabajo.id = :otId")
     Long contarBobinasPorOT(@Param("otId") Long otId);
 
+    @Query("SELECT b FROM BobinaEX b " +
+            "JOIN FETCH b.turno t " +
+            "JOIN FETCH t.ordenTrabajo ot " +
+            "JOIN FETCH ot.producto p " +
+            "WHERE b.estado = 'DISPONIBLE' " +
+            "ORDER BY b.id DESC")
+    List<BobinaEX> findDisponiblesWithDetails();
+
     Optional<BobinaEX> findByCodigoIgnoreCase(String codigo);
 }

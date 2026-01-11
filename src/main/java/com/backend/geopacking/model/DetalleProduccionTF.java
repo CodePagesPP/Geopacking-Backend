@@ -37,4 +37,10 @@ public class DetalleProduccionTF {
 
     private LocalDate fechaRegistro;
     private String registradoPor;
+
+    @Column(name = "peso_promedio")
+    private Double pesoPromedio;
+
+    @Column(name = "bobina_fin")
+    private Boolean bobinaFin;
 }

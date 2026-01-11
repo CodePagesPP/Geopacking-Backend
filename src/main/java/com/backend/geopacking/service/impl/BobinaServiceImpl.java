@@ -32,7 +32,7 @@ public class BobinaServiceImpl implements BobinaService {
     @Override
     @Transactional(readOnly = true)
     public List<BobinaTransitoDTO> listarBobinasEnTransito() {
-        return bobinaRepository.findAllWithDetails().stream()
+        return bobinaRepository.findDisponiblesWithDetails().stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
