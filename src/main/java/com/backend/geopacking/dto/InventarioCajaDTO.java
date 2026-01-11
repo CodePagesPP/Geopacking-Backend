@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 public class InventarioCajaDTO {
     private Long id;
     private String loteProduccion;
+    private String codProducto;
     private String nombreProducto;
     private Integer cantidad;
     private LocalDateTime fechaProduccion;

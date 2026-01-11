@@ -15,4 +15,7 @@ public class RegistroProduccionTFDTO {
 
     private Integer cajas;
     private Double rechazoKg;
+
+    private Double pesoPromedio;
+    private Boolean bobinaFin;
 }

@@ -154,6 +154,8 @@ public class OrdenTrabajoTFServiceImpl implements OrdenTrabajoTFService {
                     .horaFin(fin)
                     .cajas(dto.getCajas())
                     .rechazoKg(dto.getRechazoKg())
+                    .pesoPromedio(dto.getPesoPromedio())
+                    .bobinaFin(dto.getBobinaFin())
                     .fechaRegistro(LocalDate.now())
                     .registradoPor(username)
                     .build();
@@ -172,6 +174,15 @@ public class OrdenTrabajoTFServiceImpl implements OrdenTrabajoTFService {
                         .build();
 
                 inventarioRepository.save(inv);
+            }
+
+            if (Boolean.TRUE.equals(dto.getBobinaFin())) {
+                // Buscamos la bobina por su código
+                bobinaRepository.findByCodigoIgnoreCase(dto.getCodigoBobina())
+                        .ifPresent(bobina -> {
+                            bobina.setEstado("CONSUMIDA");
+                            bobinaRepository.save(bobina);
+                        });
             }
 
             double producidoActual = (ot.getProducidoKg() != null) ? ot.getProducidoKg() : 0;
@@ -197,16 +208,27 @@ public class OrdenTrabajoTFServiceImpl implements OrdenTrabajoTFService {
 
         List<InventarioCaja> entidades = inventarioRepository.findByEstado(estado, Sort.by(Sort.Direction.DESC, "fechaProduccion"));
 
-
         return entidades.stream()
-                .map(item -> InventarioCajaDTO.builder()
-                        .id(item.getId())
-                        .loteProduccion(item.getLoteProduccion())
-                        .nombreProducto(item.getNombreProducto())
-                        .cantidad(item.getCantidad())
-                        .fechaProduccion(item.getFechaProduccion())
-                        .estado(item.getEstado())
-                        .build())
+                .map(item -> {
+                    String codigoReal = "-";
+
+                    if (item.getDetalleProduccion() != null
+                            && item.getDetalleProduccion().getOrdenTrabajo() != null
+                            && item.getDetalleProduccion().getOrdenTrabajo().getProducto() != null) {
+
+                        codigoReal = item.getDetalleProduccion().getOrdenTrabajo().getProducto().getCode();
+                    }
+
+                    return InventarioCajaDTO.builder()
+                            .id(item.getId())
+                            .loteProduccion(item.getLoteProduccion())
+                            .codProducto(codigoReal)
+                            .nombreProducto(item.getNombreProducto())
+                            .cantidad(item.getCantidad())
+                            .fechaProduccion(item.getFechaProduccion())
+                            .estado(item.getEstado())
+                            .build();
+                })
                 .collect(Collectors.toList());
     }
 
@@ -285,6 +307,7 @@ public class OrdenTrabajoTFServiceImpl implements OrdenTrabajoTFService {
         dto.setProducidoKg(entity.getProducidoKg());
         dto.setEstado(entity.getEstado());
         dto.setPrioridad(entity.getPrioridad());
+        dto.setEmpaque(entity.getProducto().getLinea());
 
         if (entity.getMaquina() != null) {
             dto.setMaquinaId(entity.getMaquina().getId());

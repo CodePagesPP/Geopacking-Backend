@@ -6,6 +6,7 @@ import com.backend.geopacking.model.InventarioCaja;
 import com.backend.geopacking.model.OrdenTrabajoTF;
 import com.backend.geopacking.repository.DetalleProduccionTFRepository;
 import com.backend.geopacking.repository.OrdenTrabajoTFRepository;
+import com.backend.geopacking.repository.UserRepository;
 import com.backend.geopacking.service.OrdenTrabajoTFService;
 import com.backend.geopacking.service.PdfTfService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -33,6 +35,8 @@ public class OrdenTrabajoTFController {
     private DetalleProduccionTFRepository detalleRepository;
     @Autowired
     private OrdenTrabajoTFRepository otRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     @PostMapping("/crear")
     public ResponseEntity<OrdenTrabajoTFDTO> crearOrden(@RequestBody OrdenTrabajoTFDTO dto, @AuthenticationPrincipal UserDetails userDetails) {
@@ -107,15 +111,23 @@ public class OrdenTrabajoTFController {
     }
 
     @GetMapping("/reporte/{otId}")
-    public ResponseEntity<byte[]> descargarReporte(@PathVariable Long otId, @RequestParam(required = false) String observaciones) { // <--- Nuevo param
+    public ResponseEntity<byte[]> descargarReporte(@PathVariable Long otId, @RequestParam(required = false) String observaciones, @AuthenticationPrincipal UserDetails userDetails) {
         try {
             OrdenTrabajoTF ot = otRepository.findById(otId)
                     .orElseThrow(() -> new RuntimeException("OT no encontrada"));
 
+            String nombreOperador = "Desconocido";
+
+            if (userDetails != null) {
+                String dni = userDetails.getUsername();
+                nombreOperador = userRepository.findByDni(dni)
+                        .map(u -> u.getName() + " " + u.getLastName())
+                        .orElse(dni);
+            }
+
             List<DetalleProduccionTF> detalles = detalleRepository.findByOrdenTrabajoId(otId);
 
-            // Pasamos las observaciones al servicio PDF
-            byte[] pdfBytes = pdfService.generarReporteAvance(ot, detalles, observaciones);
+            byte[] pdfBytes = pdfService.generarReporteAvance(ot, detalles, observaciones, nombreOperador);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
@@ -170,7 +182,6 @@ public class OrdenTrabajoTFController {
 
     @GetMapping("/inventario/tf")
     public ResponseEntity<List<InventarioCajaDTO>> listarInventarioTF() {
-
         return ResponseEntity.ok(otService.listarInventarioPorEstado("EN_TF"));
     }
 
