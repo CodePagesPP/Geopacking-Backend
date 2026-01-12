@@ -1,6 +1,7 @@
 package com.backend.geopacking.service;
 
 import com.backend.geopacking.model.DetalleProduccionTF;
+import com.backend.geopacking.model.InventarioCaja;
 import com.backend.geopacking.model.OrdenTrabajoTF;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
@@ -8,6 +9,8 @@ import com.itextpdf.text.pdf.draw.LineSeparator;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
+import java.text.DecimalFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -324,6 +327,177 @@ public class PdfTfService {
         cell.setHorizontalAlignment(Element.ALIGN_CENTER);
         cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
         cell.setPadding(5f);
+        table.addCell(cell);
+    }
+
+
+
+    public byte[] generarReporteSalidaPT(List<InventarioCaja> lista, List<Integer> cantidades, String usuario, String motivo) {
+        try {
+            Document document = new Document(PageSize.A4, 20, 20, 20, 20); // Márgenes reducidos
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            PdfWriter.getInstance(document, out);
+
+            document.open();
+
+
+            Font fontEmpresa = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16);
+            Font fontLabel = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
+            Font fontValue = FontFactory.getFont(FontFactory.HELVETICA, 8);
+            Font fontHeaderTabla = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9);
+            Font fontCuerpoTabla = FontFactory.getFont(FontFactory.HELVETICA, 9);
+
+
+            DateTimeFormatter dtfFecha = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            String valFechaMov = LocalDate.now().format(dtfFecha);
+
+            String valAlmacen = "ALMACÉN PRODUCTO TERMINADO";
+            String valMovimiento = "SALIDA";
+            String valNumMov = "-"; // En salida masiva no hay un solo ID único, ponemos guion
+            String valComentarios = "Salida masiva de stock";
+            String valUsuario = (usuario != null) ? usuario : "ADMIN";
+            String valMotivo = (motivo != null) ? motivo : "VENTA";
+
+
+            Paragraph titulo = new Paragraph("GEOPACKING SAC", fontEmpresa);
+            titulo.setAlignment(Element.ALIGN_CENTER);
+            titulo.setSpacingAfter(15f);
+            document.add(titulo);
+
+
+            PdfPTable infoTable = new PdfPTable(8);
+            infoTable.setWidthPercentage(100);
+            infoTable.setWidths(new float[]{2.5f, 4f, 2.5f, 3f, 1.5f, 1.5f, 3f, 4f});
+
+            addCellHeaderInfo(infoTable, "ALMACÉN", fontLabel);
+            addCellHeaderInfo(infoTable, valAlmacen, fontValue);
+
+            addCellHeaderInfo(infoTable, "MOVIMIENTO", fontLabel);
+            addCellHeaderInfo(infoTable, valMovimiento, fontValue);
+
+            addCellHeaderInfo(infoTable, "N° MOV", fontLabel);
+            addCellHeaderInfo(infoTable, valNumMov, fontValue);
+
+            addCellHeaderInfo(infoTable, "COMENTARIOS", fontLabel);
+            addCellHeaderInfo(infoTable, valComentarios, fontValue);
+
+            addCellHeaderInfo(infoTable, "USUARIO", fontLabel);
+            addCellHeaderInfo(infoTable, valUsuario, fontValue);
+
+            addCellHeaderInfo(infoTable, "FECHA DEL MOV.", fontLabel);
+            addCellHeaderInfo(infoTable, valFechaMov, fontValue);
+
+            addCellHeaderInfo(infoTable, "MOTIVO", fontLabel);
+            addCellHeaderInfo(infoTable, valMotivo, fontValue);
+
+            addCellHeaderInfo(infoTable, "", fontLabel);
+            addCellHeaderInfo(infoTable, "", fontValue);
+
+            document.add(infoTable);
+            document.add(new Paragraph(" "));
+
+
+            Paragraph tituloTabla = new Paragraph("DETALLES DEL MOVIMIENTO", fontLabel);
+            tituloTabla.setAlignment(Element.ALIGN_CENTER);
+            tituloTabla.setSpacingAfter(5f);
+            document.add(tituloTabla);
+
+
+            PdfPTable table = new PdfPTable(6);
+            table.setWidthPercentage(100);
+
+            table.setWidths(new float[]{1f, 2f, 2f, 2f, 4.5f, 2.5f});
+
+            String[] headers = {"ITEM", "FECHA PROD", "CÓDIGO", "OPERACIÓN", "LOTE PRODUCCIÓN", "CANTIDAD"};
+
+            for (String h : headers) {
+                PdfPCell cell = new PdfPCell(new Phrase(h, fontHeaderTabla));
+
+                cell.setBorder(Rectangle.TOP | Rectangle.BOTTOM);
+                cell.setBorderWidthTop(1.5f);
+                cell.setBorderWidthBottom(1.5f);
+                cell.setBorderWidthLeft(0);
+                cell.setBorderWidthRight(0);
+                cell.setPaddingTop(5);
+                cell.setPaddingBottom(5);
+                cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                table.addCell(cell);
+            }
+
+            int itemCounter = 1;
+            DecimalFormat df = new DecimalFormat("#,##0.00");
+
+
+            for (int i = 0; i < lista.size(); i++) {
+                InventarioCaja itemInv = lista.get(i);
+                Integer cantidadSacada = cantidades.get(i);
+
+
+                addDataCellClean(table, String.valueOf(itemCounter++), fontCuerpoTabla, Element.ALIGN_CENTER);
+
+
+                String fechaProdStr = itemInv.getFechaProduccion() != null ?
+                        itemInv.getFechaProduccion().format(dtfFecha) : "-";
+                addDataCellClean(table, fechaProdStr, fontCuerpoTabla, Element.ALIGN_CENTER);
+
+
+                String codigoProd = "-";
+                if(itemInv.getDetalleProduccion() != null &&
+                        itemInv.getDetalleProduccion().getOrdenTrabajo() != null) {
+                    codigoProd = itemInv.getDetalleProduccion().getOrdenTrabajo().getProducto().getCode();
+                }
+                addDataCellClean(table, codigoProd, fontCuerpoTabla, Element.ALIGN_CENTER);
+
+
+                addDataCellClean(table, "SALIDA", fontCuerpoTabla, Element.ALIGN_CENTER);
+
+
+                addDataCellClean(table, itemInv.getLoteProduccion(), fontCuerpoTabla, Element.ALIGN_LEFT);
+
+
+                addDataCellClean(table, df.format(cantidadSacada) + " UND", fontCuerpoTabla, Element.ALIGN_RIGHT);
+            }
+
+
+            PdfPCell lineaFinal = new PdfPCell();
+            lineaFinal.setColspan(6);
+            lineaFinal.setBorder(Rectangle.TOP);
+            lineaFinal.setBorderWidthTop(1.5f);
+            table.addCell(lineaFinal);
+
+            document.add(table);
+
+
+            document.add(new Paragraph(" "));
+            document.add(new Paragraph(" "));
+            Paragraph footer = new Paragraph("----------------------------------------\nCONFIRMADO", fontValue);
+            footer.setAlignment(Element.ALIGN_CENTER);
+            document.add(footer);
+
+            document.close();
+            return out.toByteArray();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private void addCellHeaderInfo(PdfPTable table, String text, Font font) {
+        PdfPCell cell = new PdfPCell(new Phrase(text, font));
+        cell.setBorder(Rectangle.NO_BORDER);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPaddingBottom(5f);
+        table.addCell(cell);
+    }
+
+    private void addDataCellClean(PdfPTable table, String text, Font font, int alignment) {
+        PdfPCell cell = new PdfPCell(new Phrase(text, font));
+        cell.setHorizontalAlignment(alignment);
+        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cell.setPaddingTop(4f);
+        cell.setPaddingBottom(4f);
+        cell.setBorder(Rectangle.NO_BORDER); // Filas limpias sin bordes verticales/horizontales internos
         table.addCell(cell);
     }
 }
