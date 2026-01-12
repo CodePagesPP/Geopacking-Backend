@@ -195,4 +195,23 @@ public class OrdenTrabajoTFController {
         otService.enviarAProductosTerminados(id);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/inventario/registrar-salida")
+    public ResponseEntity<byte[]> registrarSalida(@RequestBody SalidaRequestDTO request,
+                                                  @AuthenticationPrincipal UserDetails userDetails) {
+        String username = (userDetails != null) ? userDetails.getUsername() : "ADMIN";
+
+        byte[] pdfBytes = otService.registrarSalidaMasiva(request, username);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=Reporte_Salida.pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdfBytes);
+    }
+
+    @GetMapping("/inventario/buscar-producto")
+    public ResponseEntity<List<InventarioCajaDTO>> buscarPorCodigo(@RequestParam("codigo") String codigo) {
+        List<InventarioCajaDTO> encontrados = otService.buscarInventarioPorCodigoProducto(codigo);
+        return ResponseEntity.ok(encontrados);
+    }
 }

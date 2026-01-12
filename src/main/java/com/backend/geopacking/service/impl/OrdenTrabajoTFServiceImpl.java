@@ -4,6 +4,7 @@ import com.backend.geopacking.dto.*;
 import com.backend.geopacking.model.*;
 import com.backend.geopacking.repository.*;
 import com.backend.geopacking.service.OrdenTrabajoTFService;
+import com.backend.geopacking.service.PdfTfService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,8 @@ public class OrdenTrabajoTFServiceImpl implements OrdenTrabajoTFService {
     private BobinaEXRepository bobinaRepository;
     @Autowired
     private InventarioCajaRepository inventarioRepository;
+    @Autowired
+    private PdfTfService pdfService;
 
     @Override
     public OrdenTrabajoTFDTO crearOrden(OrdenTrabajoTFDTO dto, String dniUsuario) {
@@ -296,6 +299,67 @@ public class OrdenTrabajoTFServiceImpl implements OrdenTrabajoTFService {
                     .inicioSecuencia(1)
                     .build();
         }).collect(Collectors.toList());
+    }
+
+
+    @Transactional
+    @Override
+    public byte[] registrarSalidaMasiva(SalidaRequestDTO request, String username) {
+        List<InventarioCaja> itemsProcesados = new ArrayList<>();
+        List<Integer> cantidades = new ArrayList<>();
+
+        for (TfSalidaDTO dto : request.getItems()) {
+            InventarioCaja item = inventarioRepository.findById(dto.getInventarioId())
+                    .orElseThrow(() -> new RuntimeException("Item no encontrado"));
+
+            if (item.getCantidad() < dto.getCantidadRetirar()) {
+                throw new RuntimeException("Stock insuficiente: " + item.getLoteProduccion());
+            }
+
+            item.setCantidad(item.getCantidad() - dto.getCantidadRetirar());
+
+            if (item.getCantidad() == 0) {
+                item.setEstado("DESPACHADO");
+            }
+
+            inventarioRepository.save(item);
+
+            itemsProcesados.add(item);
+            cantidades.add(dto.getCantidadRetirar());
+        }
+
+        return pdfService.generarReporteSalidaPT(itemsProcesados, cantidades, username, "VENTA");
+    }
+
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<InventarioCajaDTO> buscarInventarioPorCodigoProducto(String codigo) {
+
+        List<InventarioCaja> entidades = inventarioRepository.buscarPorCodigoProducto(codigo);
+
+
+        return entidades.stream()
+                .map(item -> {
+                    String codigoReal = "-";
+
+                    if (item.getDetalleProduccion() != null
+                            && item.getDetalleProduccion().getOrdenTrabajo() != null
+                            && item.getDetalleProduccion().getOrdenTrabajo().getProducto() != null) {
+                        codigoReal = item.getDetalleProduccion().getOrdenTrabajo().getProducto().getCode();
+                    }
+
+                    return InventarioCajaDTO.builder()
+                            .id(item.getId())
+                            .loteProduccion(item.getLoteProduccion())
+                            .codProducto(codigoReal)
+                            .nombreProducto(item.getNombreProducto())
+                            .cantidad(item.getCantidad())
+                            .fechaProduccion(item.getFechaProduccion())
+                            .estado(item.getEstado())
+                            .build();
+                })
+                .collect(Collectors.toList());
     }
 
     private OrdenTrabajoTFDTO mapToDTO(OrdenTrabajoTF entity) {

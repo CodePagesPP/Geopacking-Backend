@@ -21,4 +21,6 @@ public interface OrdenTrabajoTFService {
     List<HistorialCajasDTO> listarHistorial(LocalDate inicio, LocalDate fin);
     void enviarAProductosTerminados(Long idInventario);
     List<InventarioCajaDTO> listarInventarioPorEstado(String estado);
+    byte[] registrarSalidaMasiva(SalidaRequestDTO request, String username);
+    List<InventarioCajaDTO> buscarInventarioPorCodigoProducto(String codigo);
 }
