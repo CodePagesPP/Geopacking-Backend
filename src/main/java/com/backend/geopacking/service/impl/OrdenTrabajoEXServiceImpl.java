@@ -8,10 +8,15 @@ import com.backend.geopacking.repository.ProductoEXRepository;
 import com.backend.geopacking.repository.UserRepository;
 import com.backend.geopacking.service.OrdenTrabajoEXService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -69,6 +74,32 @@ public class OrdenTrabajoEXServiceImpl implements OrdenTrabajoEXService{
     }
 
 
+    @Transactional(readOnly = true)
+    @Override
+    public Page<OrdenTrabajoEXDTO> listarPaginado(
+            Long maquinaId,
+            Long productoId,
+            String estadoStr,
+            LocalDate fDesde,
+            LocalDate fHasta,
+            Pageable pageable) {
+
+        // Conversión de Estado (String -> Enum)
+        EstadoOT_EX estado = null;
+        if (estadoStr != null && !estadoStr.isEmpty()) {
+            estado = EstadoOT_EX.valueOf(estadoStr);
+        }
+
+        // Conversión de Fechas
+        LocalDateTime desde = (fDesde != null) ? fDesde.atStartOfDay() : null;
+        LocalDateTime hasta = (fHasta != null) ? fHasta.atTime(LocalTime.MAX) : null;
+
+        Page<OrdenTrabajoEX> page = otRepository.filtrarOrdenes(maquinaId, productoId, estado, desde, hasta, pageable);
+
+        return page.map(this::mapToDTO);
+    }
+
+
     @Override
     public List<OrdenTrabajoEXDTO> listarOrdenesOT() {
 
@@ -109,7 +140,9 @@ public class OrdenTrabajoEXServiceImpl implements OrdenTrabajoEXService{
         OrdenTrabajoEX ot = otRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("OT no encontrada con ID: " + id));
 
-
+        if (ot.getEstado() == EstadoOT_EX.EN_PROCESO || ot.getEstado() == EstadoOT_EX.COMPLETADO) {
+            throw new RuntimeException("No se puede editar una orden que ya está EN PROCESO o COMPLETADA.");
+        }
 
         Maquina maquina = maquinaRepository.findById(dto.getMaquinaId())
                 .orElseThrow(() -> new RuntimeException("Máquina no encontrada"));
