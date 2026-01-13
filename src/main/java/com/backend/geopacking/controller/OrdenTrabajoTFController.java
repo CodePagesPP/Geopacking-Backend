@@ -3,6 +3,7 @@ package com.backend.geopacking.controller;
 import com.backend.geopacking.dto.*;
 import com.backend.geopacking.model.DetalleProduccionTF;
 import com.backend.geopacking.model.InventarioCaja;
+import com.backend.geopacking.model.MovimientoSalida;
 import com.backend.geopacking.model.OrdenTrabajoTF;
 import com.backend.geopacking.repository.DetalleProduccionTFRepository;
 import com.backend.geopacking.repository.OrdenTrabajoTFRepository;
@@ -10,6 +11,10 @@ import com.backend.geopacking.repository.UserRepository;
 import com.backend.geopacking.service.OrdenTrabajoTFService;
 import com.backend.geopacking.service.PdfTfService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -180,14 +185,44 @@ public class OrdenTrabajoTFController {
         return ResponseEntity.ok(otService.listarHistorial(fechaInicio, fechaFin));
     }
 
+
     @GetMapping("/inventario/tf")
-    public ResponseEntity<List<InventarioCajaDTO>> listarInventarioTF() {
-        return ResponseEntity.ok(otService.listarInventarioPorEstado("EN_TF"));
+    public ResponseEntity<Page<InventarioCajaDTO>> listarInventarioTF(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) String busqueda
+    ) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "fechaProduccion"));
+
+
+        return ResponseEntity.ok(otService.listarInventarioPaginado("EN_TF", fechaInicio, fechaFin, busqueda, pageable));
     }
 
     @GetMapping("/inventario/pt")
-    public ResponseEntity<List<InventarioCajaDTO>> listarInventarioPT() {
-        return ResponseEntity.ok(otService.listarInventarioPorEstado("EN_PT"));
+    public ResponseEntity<Page<InventarioCajaDTO>> listarInventarioPT(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) String busqueda
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "fechaProduccion"));
+
+        return ResponseEntity.ok(otService.listarInventarioPaginado("EN_PT", fechaInicio, fechaFin, busqueda, pageable));
+    }
+
+    @GetMapping("/inventario/stock-total")
+    public ResponseEntity<Integer> obtenerStockTotal(
+            @RequestParam String estado,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) String busqueda
+    ) {
+        Integer total = otService.obtenerStockTotal(estado, fechaInicio, fechaFin, busqueda);
+        return ResponseEntity.ok(total);
     }
 
     @PostMapping("/inventario/mover-a-pt/{id}")
@@ -213,5 +248,27 @@ public class OrdenTrabajoTFController {
     public ResponseEntity<List<InventarioCajaDTO>> buscarPorCodigo(@RequestParam("codigo") String codigo) {
         List<InventarioCajaDTO> encontrados = otService.buscarInventarioPorCodigoProducto(codigo);
         return ResponseEntity.ok(encontrados);
+    }
+
+    @GetMapping("/inventario/historial-salidas")
+    public ResponseEntity<Page<MovimientoSalida>> listarHistorial(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+    ) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "fechaRegistro"));
+
+        return ResponseEntity.ok(otService.listarHistorialSalidas(fechaInicio, fechaFin, pageable));
+    }
+
+    @GetMapping("/inventario/reimprimir-salida/{id}")
+    public ResponseEntity<byte[]> reimprimir(@PathVariable Long id) {
+        byte[] pdf = otService.reimprimirReporteSalida(id);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=Reporte_Historial.pdf")
+                .body(pdf);
     }
 }

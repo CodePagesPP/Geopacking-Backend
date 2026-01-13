@@ -6,6 +6,8 @@ import com.backend.geopacking.repository.*;
 import com.backend.geopacking.service.OrdenTrabajoTFService;
 import com.backend.geopacking.service.PdfTfService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -38,6 +41,10 @@ public class OrdenTrabajoTFServiceImpl implements OrdenTrabajoTFService {
     private InventarioCajaRepository inventarioRepository;
     @Autowired
     private PdfTfService pdfService;
+    @Autowired
+    private MovimientoSalidaRepository movimientoRepository;
+    @Autowired
+    private DetalleMovimientoSalidaRepository detalleMovimientoSalidaRepository;
 
     @Override
     public OrdenTrabajoTFDTO crearOrden(OrdenTrabajoTFDTO dto, String dniUsuario) {
@@ -207,32 +214,70 @@ public class OrdenTrabajoTFServiceImpl implements OrdenTrabajoTFService {
     }
 
     @Override
-    public List<InventarioCajaDTO> listarInventarioPorEstado(String estado) {
+    public Page<InventarioCajaDTO> listarInventarioPaginado(
+            String estado,
+            LocalDate fInicio,
+            LocalDate fFin,
+            String busqueda,
+            Pageable pageable) {
 
-        List<InventarioCaja> entidades = inventarioRepository.findByEstado(estado, Sort.by(Sort.Direction.DESC, "fechaProduccion"));
+        // 1. Preparar Fechas (Igual que antes)
+        LocalDateTime inicio = (fInicio != null) ? fInicio.atStartOfDay() : null;
+        LocalDateTime fin = (fFin != null) ? fFin.atTime(LocalTime.MAX) : null;
 
-        return entidades.stream()
-                .map(item -> {
-                    String codigoReal = "-";
+        // 2. CORRECCIÓN AQUÍ: Preparar el término con % y minúsculas
+        String term = null;
+        if (busqueda != null && !busqueda.trim().isEmpty()) {
+            // Agregamos % al inicio y fin, y convertimos a minúscula
+            term = "%" + busqueda.trim().toLowerCase() + "%";
+        }
 
-                    if (item.getDetalleProduccion() != null
-                            && item.getDetalleProduccion().getOrdenTrabajo() != null
-                            && item.getDetalleProduccion().getOrdenTrabajo().getProducto() != null) {
+        // 3. Llamada al Repositorio (Pasa 'term' que ya tiene los %)
+        Page<InventarioCaja> pagina = inventarioRepository.filtrarInventario(estado, inicio, fin, term, pageable);
 
-                        codigoReal = item.getDetalleProduccion().getOrdenTrabajo().getProducto().getCode();
-                    }
+        // 4. Mapeo (Igual que antes)
+        return pagina.map(item -> {
+            String codigoReal = "-";
 
-                    return InventarioCajaDTO.builder()
-                            .id(item.getId())
-                            .loteProduccion(item.getLoteProduccion())
-                            .codProducto(codigoReal)
-                            .nombreProducto(item.getNombreProducto())
-                            .cantidad(item.getCantidad())
-                            .fechaProduccion(item.getFechaProduccion())
-                            .estado(item.getEstado())
-                            .build();
-                })
-                .collect(Collectors.toList());
+            if (item.getDetalleProduccion() != null
+                    && item.getDetalleProduccion().getOrdenTrabajo() != null
+                    && item.getDetalleProduccion().getOrdenTrabajo().getProducto() != null) {
+
+                codigoReal = item.getDetalleProduccion().getOrdenTrabajo().getProducto().getCode();
+            }
+
+            return InventarioCajaDTO.builder()
+                    .id(item.getId())
+                    .loteProduccion(item.getLoteProduccion())
+                    .codProducto(codigoReal)
+                    .nombreProducto(item.getNombreProducto())
+                    .cantidad(item.getCantidad())
+                    .fechaProduccion(item.getFechaProduccion())
+                    .estado(item.getEstado())
+                    .build();
+        });
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public Integer obtenerStockTotal(
+            String estado,
+            LocalDate fInicio,
+            LocalDate fFin,
+            String busqueda) {
+
+        // 1. Preparar Fechas (Igual que en listar)
+        LocalDateTime inicio = (fInicio != null) ? fInicio.atStartOfDay() : null;
+        LocalDateTime fin = (fFin != null) ? fFin.atTime(LocalTime.MAX) : null;
+
+        // 2. Preparar Búsqueda (Igual que en listar)
+        String term = null;
+        if (busqueda != null && !busqueda.trim().isEmpty()) {
+            term = "%" + busqueda.trim().toLowerCase() + "%";
+        }
+
+        // 3. Llamar al Repo de Suma
+        return inventarioRepository.sumarStockTotal(estado, inicio, fin, term);
     }
 
     @Override
@@ -305,9 +350,21 @@ public class OrdenTrabajoTFServiceImpl implements OrdenTrabajoTFService {
     @Transactional
     @Override
     public byte[] registrarSalidaMasiva(SalidaRequestDTO request, String username) {
-        List<InventarioCaja> itemsProcesados = new ArrayList<>();
-        List<Integer> cantidades = new ArrayList<>();
+        // 1. Guardar Cabecera Historial
+        MovimientoSalida movimiento = MovimientoSalida.builder()
+                .fechaRegistro(LocalDateTime.now())
+                .registradoPor(username)
+                .motivo(request.getMotivo())
+                .comentarios(request.getComentarios())
+                .build();
 
+        movimiento = movimientoRepository.save(movimiento);
+
+        // Lista para enviar al generador de PDF (DTOs limpios)
+        List<ReporteDetalleSalidaDTO> filasPdf = new ArrayList<>();
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        // 2. Procesar Items
         for (TfSalidaDTO dto : request.getItems()) {
             InventarioCaja item = inventarioRepository.findById(dto.getInventarioId())
                     .orElseThrow(() -> new RuntimeException("Item no encontrado"));
@@ -316,19 +373,83 @@ public class OrdenTrabajoTFServiceImpl implements OrdenTrabajoTFService {
                 throw new RuntimeException("Stock insuficiente: " + item.getLoteProduccion());
             }
 
+            // Actualizar stock
             item.setCantidad(item.getCantidad() - dto.getCantidadRetirar());
-
             if (item.getCantidad() == 0) {
                 item.setEstado("DESPACHADO");
             }
-
             inventarioRepository.save(item);
 
-            itemsProcesados.add(item);
-            cantidades.add(dto.getCantidadRetirar());
+            // Obtener Código Producto
+            String codProd = "-";
+            if (item.getDetalleProduccion().getOrdenTrabajo().getProducto() != null) {
+                codProd = item.getDetalleProduccion().getOrdenTrabajo().getProducto().getCode();
+            }
+
+            // Guardar Detalle Historial
+            DetalleMovimientoSalida det = DetalleMovimientoSalida.builder()
+                    .movimiento(movimiento)
+                    .codigoProducto(codProd)
+                    .nombreProducto(item.getNombreProducto())
+                    .loteProduccion(item.getLoteProduccion())
+                    .cantidad(dto.getCantidadRetirar())
+                    .fechaProduccion(item.getFechaProduccion())
+                    .build();
+            detalleMovimientoSalidaRepository.save(det);
+
+            // 3. Agregar a lista para PDF (Mapeo a DTO)
+            filasPdf.add(ReporteDetalleSalidaDTO.builder()
+                    .fecha(item.getFechaProduccion() != null ? item.getFechaProduccion().format(dtf) : "-")
+                    .codigo(codProd)
+                    .lote(item.getLoteProduccion())
+                    .cantidad(String.valueOf(dto.getCantidadRetirar()))
+                    .build());
         }
 
-        return pdfService.generarReporteSalidaPT(itemsProcesados, cantidades, username, "VENTA");
+        // 4. Generar PDF Unificado
+        return pdfService.generarReporteSalida(
+                username,
+                request.getMotivo(),
+                request.getComentarios(),
+                filasPdf
+        );
+    }
+
+    @Override
+    public Page<MovimientoSalida> listarHistorialSalidas(LocalDate fechaInicio, LocalDate fechaFin, Pageable pageable) {
+        if (fechaInicio != null && fechaFin != null) {
+
+            LocalDateTime inicio = fechaInicio.atStartOfDay();
+            LocalDateTime fin = fechaFin.atTime(LocalTime.MAX);
+
+            return movimientoRepository.findByFechaRegistroBetween(inicio, fin, pageable);
+        } else {
+            // Sin filtros, solo paginación
+            return movimientoRepository.findAll(pageable);
+        }
+    }
+
+    @Override
+    public byte[] reimprimirReporteSalida(Long movimientoId) {
+        MovimientoSalida mov = movimientoRepository.findById(movimientoId)
+                .orElseThrow(() -> new RuntimeException("Movimiento no encontrado"));
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        List<ReporteDetalleSalidaDTO> filasPdf = mov.getDetalles().stream()
+                .map(det -> ReporteDetalleSalidaDTO.builder()
+                        .fecha(det.getFechaProduccion() != null ? det.getFechaProduccion().format(dtf) : "-")
+                        .codigo(det.getCodigoProducto())
+                        .lote(det.getLoteProduccion())
+                        .cantidad(String.valueOf(det.getCantidad()))
+                        .build())
+                .collect(Collectors.toList());
+
+        return pdfService.generarReporteSalida(
+                mov.getRegistradoPor(),
+                mov.getMotivo(),
+                mov.getComentarios(),
+                filasPdf
+        );
     }
 
 
