@@ -3,11 +3,17 @@ package com.backend.geopacking.controller;
 import com.backend.geopacking.dto.OrdenTrabajoEXDTO;
 import com.backend.geopacking.service.OrdenTrabajoEXService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -23,10 +29,20 @@ public class OrdenTrabajoEXController {
         return new ResponseEntity<>(nuevaOrden, HttpStatus.CREATED);
     }
 
-    @GetMapping()
-    public ResponseEntity<List<OrdenTrabajoEXDTO>> listarOrdenes() {
-        List<OrdenTrabajoEXDTO> lista = ordenTrabajoEXService.listarOrdenes();
-        return new ResponseEntity<>(lista, HttpStatus.OK);
+    @GetMapping
+    public ResponseEntity<Page<OrdenTrabajoEXDTO>> listar(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) Long maquinaId,
+            @RequestParam(required = false) Long productoId,
+            @RequestParam(required = false) String estado,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaDesde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaHasta
+    ) {
+        // Ordenar por ID descendente por defecto
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+
+        return ResponseEntity.ok(ordenTrabajoEXService.listarPaginado(maquinaId, productoId, estado, fechaDesde, fechaHasta, pageable));
     }
 
     @PutMapping("/editar/{id}")
