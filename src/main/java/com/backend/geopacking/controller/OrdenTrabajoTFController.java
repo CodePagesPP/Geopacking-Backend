@@ -244,6 +244,12 @@ public class OrdenTrabajoTFController {
                 .body(pdfBytes);
     }
 
+    @PostMapping("/iniciar/{id}")
+    public ResponseEntity<Void> iniciarOrden(@PathVariable Long id) {
+        otService.iniciarOrden(id);
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/inventario/buscar-producto")
     public ResponseEntity<List<InventarioCajaDTO>> buscarPorCodigo(@RequestParam("codigo") String codigo) {
         List<InventarioCajaDTO> encontrados = otService.buscarInventarioPorCodigoProducto(codigo);

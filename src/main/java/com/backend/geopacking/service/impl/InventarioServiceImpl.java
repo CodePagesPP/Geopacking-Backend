@@ -3,10 +3,7 @@ package com.backend.geopacking.service.impl;
 import com.backend.geopacking.dto.InventarioManualDTO;
 import com.backend.geopacking.dto.InventarioMovimientoDTO;
 import com.backend.geopacking.model.*;
-import com.backend.geopacking.repository.InventarioMovimientoRepository;
-import com.backend.geopacking.repository.MotivoRepository;
-import com.backend.geopacking.repository.TypeScrappRepository;
-import com.backend.geopacking.repository.UserRepository;
+import com.backend.geopacking.repository.*;
 import com.backend.geopacking.service.InventarioService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +31,7 @@ public class InventarioServiceImpl implements InventarioService {
     private final TypeScrappRepository typeScrappRepository;
     private final MotivoRepository motivoRepository;
     private final UserRepository userRepository;
+    private final OrdenTrabajoEXRepository otExRepository;
 
     @Override
     @Transactional
@@ -128,6 +126,12 @@ public class InventarioServiceImpl implements InventarioService {
         dto.setFechaRegistro(entidad.getFechaRegistro());
         dto.setNota(entidad.getNota());
 
+        if (entidad.getOrdenTrabajo() != null) {
+            dto.setCodigoOT(entidad.getOrdenTrabajo().getCodigo());
+        } else {
+            dto.setCodigoOT("-");
+        }
+
         if (entidad.getRegistradoPor() != null) {
             dto.setRegistradoPorNombre(entidad.getRegistradoPor().getName());
         }
@@ -145,9 +149,17 @@ public class InventarioServiceImpl implements InventarioService {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void registrarSalidaAutomaticaScrapp(Long typeScrappId, Double cantidad) {
+    public void registrarSalidaAutomaticaScrapp(Long typeScrappId, Double cantidad, Long otId) {
         TypeScrapp tipo = typeScrappRepository.findById(typeScrappId)
                 .orElseThrow(() -> new RuntimeException("Tipo de Scrapp no encontrado"));
+
+        OrdenTrabajoEX ot = null;
+        String codigoOTStr = "GENERAL";
+
+        if (otId != null) {
+            ot = otExRepository.findById(otId).orElse(null);
+            if (ot != null) codigoOTStr = ot.getCodigo();
+        }
 
         Motivo motivoProd = motivoRepository.findByNombreIgnoreCase("PRODUCCION")
                 .orElseThrow(() -> new RuntimeException("Motivo PRODUCCION no existe"));
@@ -155,7 +167,7 @@ public class InventarioServiceImpl implements InventarioService {
         User usuarioSistema = userRepository.findById(1L)
                 .orElseThrow(() -> new RuntimeException("Usuario Sistema (ID 1) no encontrado"));
 
-        String codigoGen = "SAL-PROD-" + System.currentTimeMillis();
+        String codigoGen = "SAL-PROD-" + codigoOTStr;
 
         InventarioMovimiento movimiento = InventarioMovimiento.builder()
                 .codigoMovimiento(codigoGen)
@@ -168,6 +180,7 @@ public class InventarioServiceImpl implements InventarioService {
                 .motivo(motivoProd)
                 .registradoPor(usuarioSistema)
                 .nota("Consumo automático por Producción")
+                .ordenTrabajo(ot)
                 .build();
 
         inventarioRepository.save(movimiento);

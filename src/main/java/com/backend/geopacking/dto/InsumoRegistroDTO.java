@@ -24,4 +24,5 @@ public class InsumoRegistroDTO {
     private String registradoPorNombre;
     private TipoRegistro tipoRegistro;
     private LocalDateTime fechaRegistro;
+    private String codigoOT;
 }

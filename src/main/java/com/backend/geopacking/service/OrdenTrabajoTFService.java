@@ -38,4 +38,5 @@ public interface OrdenTrabajoTFService {
     List<InventarioCajaDTO> buscarInventarioPorCodigoProducto(String codigo);
     Page<MovimientoSalida> listarHistorialSalidas(LocalDate fechaInicio, LocalDate fechaFin, Pageable pageable);
     byte[] reimprimirReporteSalida(Long movimientoId);
+    void iniciarOrden(Long id);
 }

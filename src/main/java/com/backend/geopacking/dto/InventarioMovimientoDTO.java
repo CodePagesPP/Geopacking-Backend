@@ -20,4 +20,5 @@ public class InventarioMovimientoDTO {
     private String registradoPorNombre;
     private String motivoNombre;
     private String nota;
+    private String codigoOT;
 }

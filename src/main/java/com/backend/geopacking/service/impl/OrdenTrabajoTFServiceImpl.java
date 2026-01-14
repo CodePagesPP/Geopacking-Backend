@@ -196,7 +196,15 @@ public class OrdenTrabajoTFServiceImpl implements OrdenTrabajoTFService {
             }
 
             double producidoActual = (ot.getProducidoKg() != null) ? ot.getProducidoKg() : 0;
-            ot.setProducidoKg(producidoActual + dto.getCajas());
+            double nuevoTotal = producidoActual + dto.getCajas();
+
+            ot.setProducidoKg(nuevoTotal);
+
+            if (nuevoTotal >= ot.getRequerimientoKg()) {
+                ot.setEstado(EstadoOT_TF.COMPLETADO);
+            } else {
+                ot.setEstado(EstadoOT_TF.EN_PROCESO);
+            }
 
             otRepository.save(ot);
         }
@@ -450,6 +458,19 @@ public class OrdenTrabajoTFServiceImpl implements OrdenTrabajoTFService {
                 mov.getComentarios(),
                 filasPdf
         );
+    }
+
+    @Override
+    @Transactional
+    public void iniciarOrden(Long id) {
+        OrdenTrabajoTF ot = otRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("OT no encontrada"));
+
+        // Solo cambiamos si está en ESPERA
+        if (ot.getEstado() == EstadoOT_TF.EN_ESPERA) {
+            ot.setEstado(EstadoOT_TF.EN_PROCESO);
+            otRepository.save(ot);
+        }
     }
 
 
