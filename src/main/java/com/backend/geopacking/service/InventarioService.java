@@ -26,6 +26,6 @@ public interface InventarioService {
     List<InventarioMovimientoDTO> listarMovimientosReporte(LocalDate inicio, LocalDate fin, Long typeScrappId);
     public byte[] generarPdfDisenoImagen(List<InventarioMovimientoDTO> lista, String rangoFechas, String filtroInfo) throws DocumentException;
 
-    void registrarSalidaAutomaticaScrapp(Long typeScrappId, Double cantidad);
+    void registrarSalidaAutomaticaScrapp(Long typeScrappId, Double cantidad, Long otId);
 
 }

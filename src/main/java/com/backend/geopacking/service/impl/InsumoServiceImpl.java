@@ -2,10 +2,7 @@ package com.backend.geopacking.service.impl;
 
 import com.backend.geopacking.dto.InsumoRegistroDTO;
 import com.backend.geopacking.model.*;
-import com.backend.geopacking.repository.MaterialRepository;
-import com.backend.geopacking.repository.MotivoRepository;
-import com.backend.geopacking.repository.RegistroInsumoRepository;
-import com.backend.geopacking.repository.UserRepository;
+import com.backend.geopacking.repository.*;
 import com.backend.geopacking.service.InsumoService;
 import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityNotFoundException;
@@ -30,6 +27,7 @@ public class InsumoServiceImpl implements InsumoService {
     private final MaterialRepository materialRepository;
     private final MotivoRepository motivoRepository;
     private final UserRepository userRepository;
+    private final OrdenTrabajoEXRepository otExRepository;
 
 
     @Override
@@ -84,9 +82,14 @@ public class InsumoServiceImpl implements InsumoService {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void registrarSalidaAutomatica(Long materialId, Double cantidad) {
+    public void registrarSalidaAutomatica(Long materialId, Double cantidad, Long otId) {
         Material material = materialRepository.findById(materialId)
                 .orElseThrow(() -> new RuntimeException("Material no encontrado"));
+
+        OrdenTrabajoEX ot = null;
+        if(otId != null){
+            ot = otExRepository.findById(otId).orElse(null);
+        }
 
         Motivo motivoProduccion = motivoRepository.findByNombreIgnoreCase("PRODUCCION")
                 .orElseThrow(() -> new RuntimeException("Motivo 'PRODUCCION' no configurado en BD"));
@@ -104,6 +107,7 @@ public class InsumoServiceImpl implements InsumoService {
                 .motivo(motivoProduccion)
                 .observaciones("Consumo automático generado por Producción")
                 .registradoPor(usuarioSistema)
+                .ordenTrabajo(ot)
                 .build();
 
         insumoRepository.save(salida);
@@ -118,6 +122,14 @@ public class InsumoServiceImpl implements InsumoService {
         dto.setCantidad(entidad.getCantidad());
         dto.setTipoRegistro(entidad.getTipoRegistro());
         dto.setObservaciones(entidad.getObservaciones());
+
+        String otCodigo = "_";
+
+        if (entidad.getOrdenTrabajo() != null) {
+            otCodigo = entidad.getOrdenTrabajo().getCodigo();
+        }
+
+        dto.setCodigoOT(otCodigo);
 
         if (entidad.getMaterial() != null) {
             dto.setMaterialId(entidad.getMaterial().getId());

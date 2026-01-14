@@ -60,4 +60,8 @@ public class RegistroInsumo {
     @ManyToOne
     @JoinColumn(name = "usuario_id", nullable = true)
     private User registradoPor;
+
+    @ManyToOne
+    @JoinColumn(name = "ot_ex_id")
+    private OrdenTrabajoEX ordenTrabajo;
 }

@@ -66,4 +66,8 @@ public class InventarioMovimiento {
 
     @Column(columnDefinition = "TEXT")
     private String nota;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "orden_trabajo_id")
+    private OrdenTrabajoEX ordenTrabajo;
 }

@@ -61,7 +61,7 @@ public class TurnoEXServiceImpl implements TurnoEXService {
 
                 if (m.getMaterialOriginalId() != null && m.getCantidadKg() > 0) {
                     try {
-                        insumoService.registrarSalidaAutomatica(m.getMaterialOriginalId(), m.getCantidadKg());
+                        insumoService.registrarSalidaAutomatica(m.getMaterialOriginalId(), m.getCantidadKg(), ot.getId());
                     } catch (Exception e) {
 
                         System.err.println("Error descontando insumo: " + e.getMessage());
@@ -83,7 +83,7 @@ public class TurnoEXServiceImpl implements TurnoEXService {
                 if (sDto.getTypeScrappId() != null && sDto.getCantidad() > 0) {
                     s.setTypeScrappOriginalId(sDto.getTypeScrappId());
                     try {
-                        inventarioService.registrarSalidaAutomaticaScrapp(sDto.getTypeScrappId(), sDto.getCantidad());
+                        inventarioService.registrarSalidaAutomaticaScrapp(sDto.getTypeScrappId(), sDto.getCantidad(), ot.getId());
                     } catch (Exception e) {
                         System.err.println("Error descontando Scrapp: " + e.getMessage());
                     }

@@ -29,7 +29,7 @@ public class PdfTfService {
         document.open();
 
         // Fuentes
-        Font fontProducto = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11);
+        Font fontProducto = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9);
         Font fontLabel = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
         Font fontValue = FontFactory.getFont(FontFactory.HELVETICA, 10);
         Font fontSmall = FontFactory.getFont(FontFactory.HELVETICA, 7);
@@ -62,7 +62,6 @@ public class PdfTfService {
             cellHeader.setBorder(Rectangle.BOTTOM);
             cellHeader.setPaddingTop(2f);
             cellHeader.setPaddingBottom(5f);
-            cellHeader.setFixedHeight(35f);
 
             Paragraph pCodigo = new Paragraph(codigoProducto, fontLabel);
             pCodigo.setAlignment(Element.ALIGN_CENTER);
@@ -70,6 +69,7 @@ public class PdfTfService {
 
             Paragraph pNombre = new Paragraph(nombreProducto, fontProducto);
             pNombre.setAlignment(Element.ALIGN_CENTER);
+            pNombre.setSpacingBefore(2f);
             cellHeader.addElement(pNombre);
 
             mainTable.addCell(cellHeader);
@@ -127,7 +127,7 @@ public class PdfTfService {
         return baos.toByteArray();
     }
 
-    // --- 2. GENERAR REPORTE DE AVANCE (Lo que ves en pantalla en PDF) ---
+    // GENERAR REPORTE DE AVANCE
     public byte[] generarReporteAvance(OrdenTrabajoTF ot, List<DetalleProduccionTF> detalles, String observaciones, String nombreOperador) throws DocumentException {
         Document document = new Document(PageSize.A4);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -193,9 +193,9 @@ public class PdfTfService {
         subtitulo.setSpacingAfter(5f);
         document.add(subtitulo);
 
-        PdfPTable table = new PdfPTable(7);
+        PdfPTable table = new PdfPTable(8);
         table.setWidthPercentage(100);
-        table.setWidths(new float[]{2f, 1.8f, 1f, 1.2f, 1.2f, 1f, 1.2f});
+        table.setWidths(new float[]{2f, 1.8f, 1f, 1.2f, 1.2f, 1f, 1f, 1.2f});
 
         // Encabezados con Fondo Gris Oscuro (Look Profesional)
         BaseColor grisHeader = new BaseColor(80, 80, 80);
@@ -204,6 +204,7 @@ public class PdfTfService {
         addCellHeaderColor(table, "Veloc.", fontTablaHeader, grisHeader);
         addCellHeaderColor(table, "H. Inicio", fontTablaHeader, grisHeader);
         addCellHeaderColor(table, "H. Fin", fontTablaHeader, grisHeader);
+        addCellHeaderColor(table, "Peso Prom.", fontTablaHeader, grisHeader);
         addCellHeaderColor(table, "Cajas", fontTablaHeader, grisHeader);
         addCellHeaderColor(table, "Rechazo", fontTablaHeader, grisHeader);
 
@@ -219,6 +220,9 @@ public class PdfTfService {
 
             addCellCentered(table, det.getHoraInicio() != null ? det.getHoraInicio().toString() : "-", fontRow);
             addCellCentered(table, det.getHoraFin() != null ? det.getHoraFin().toString() : "-", fontRow);
+
+            String pesoStr = (det.getPesoPromedio() != null) ? String.valueOf(det.getPesoPromedio()) : "-";
+            addCellCentered(table, pesoStr, fontRow);
 
             addCellCentered(table, String.valueOf(det.getCajas()), fontRow);
             addCellCentered(table, String.format("%.2f", det.getRechazoKg()), fontRow);
