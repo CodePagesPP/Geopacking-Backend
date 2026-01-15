@@ -9,6 +9,9 @@ import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -37,23 +40,20 @@ public class BobinaController {
 
 
     @GetMapping("/historial")
-    public ResponseEntity<List<BobinaHistorialDTO>> listarHistorial(
+    public ResponseEntity<Page<BobinaHistorialDTO>> listarHistorial(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fin) {
 
-        List<BobinaHistorialDTO> lista;
+        LocalDateTime fechaInicio = (inicio != null) ? inicio.atStartOfDay() : null;
+        LocalDateTime fechaFin = (fin != null) ? fin.atTime(LocalTime.MAX) : null;
 
-        if (inicio != null && fin != null) {
 
-            LocalDateTime fechaInicio = inicio.atStartOfDay();
-            LocalDateTime fechaFin = fin.atTime(LocalTime.MAX);
+        Pageable pageable = PageRequest.of(page, size);
 
-            lista = bobinaRepository.filtrarPorFechas(fechaInicio, fechaFin);
-        } else {
-            lista = bobinaRepository.obtenerHistorialCompleto();
-        }
 
-        return ResponseEntity.ok(lista);
+        return ResponseEntity.ok(bobinaRepository.buscarHistorialPaginado(fechaInicio, fechaFin, pageable));
     }
 
 

@@ -14,6 +14,13 @@ import java.util.List;
 public interface OrdenTrabajoTFService {
     OrdenTrabajoTFDTO crearOrden(OrdenTrabajoTFDTO dto, String dniUsuario);
     List<OrdenTrabajoTFDTO> listarOrdenes();
+    Page<OrdenTrabajoTFDTO> listarPaginado(
+            Long maquinaId,
+            Long productoId,
+            String estadoStr,
+            LocalDate fDesde,
+            LocalDate fHasta,
+            Pageable pageable);
     List<OrdenTrabajoTFDTO> listarOrdenesPrioridad();
     void actualizarPrioridades(List<OrdenTrabajoTFDTO> listaOrdenada);
     List<OrdenTrabajoTFDTO> listarOrdenesPendientes();

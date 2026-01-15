@@ -2,6 +2,8 @@ package com.backend.geopacking.repository;
 
 import com.backend.geopacking.dto.BobinaHistorialDTO;
 import com.backend.geopacking.model.BobinaEX;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -28,26 +30,14 @@ public interface BobinaEXRepository extends JpaRepository<BobinaEX, Long> {
             "b.turno.ordenTrabajo.codigo" +
             ") " +
             "FROM BobinaEX b " +
+            "WHERE (cast(:inicio as timestamp) IS NULL OR b.turno.fechaHoraFin >= :inicio) " +
+            "AND (cast(:fin as timestamp) IS NULL OR b.turno.fechaHoraFin <= :fin) " +
             "ORDER BY b.turno.fechaHoraFin DESC")
-    List<BobinaHistorialDTO> obtenerHistorialCompleto();
-
-    @Query("SELECT new com.backend.geopacking.dto.BobinaHistorialDTO(" +
-            "b.id, " +
-            "b.turno.fechaHoraFin, " +
-            "b.codigo, " +
-            "'PRODUCCION', " +
-            "b.turno.ordenTrabajo.producto.code, " +
-            "b.turno.usuarioNombre, " +
-            "b.pesoBruto, " +
-            "b.pesoNeto, " +
-            "b.turno.ordenTrabajo.producto.name, " +
-            "b.turno.ordenTrabajo.maquina.codigo, " +
-            "b.turno.ordenTrabajo.codigo" +
-            ") " +
-            "FROM BobinaEX b " +
-            "WHERE b.turno.fechaHoraFin BETWEEN :inicio AND :fin " +
-            "ORDER BY b.turno.fechaHoraFin DESC")
-    List<BobinaHistorialDTO> filtrarPorFechas(@Param("inicio") LocalDateTime inicio, @Param("fin") LocalDateTime fin);
+    Page<BobinaHistorialDTO> buscarHistorialPaginado(
+            @Param("inicio") LocalDateTime inicio,
+            @Param("fin") LocalDateTime fin,
+            Pageable pageable
+    );
 
     @Query("SELECT b FROM BobinaEX b " +
             "JOIN FETCH b.turno t " +

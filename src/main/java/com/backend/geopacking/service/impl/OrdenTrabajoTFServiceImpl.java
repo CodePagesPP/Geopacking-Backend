@@ -80,6 +80,37 @@ public class OrdenTrabajoTFServiceImpl implements OrdenTrabajoTFService {
         return otRepository.findAll().stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    @Override
+    public Page<OrdenTrabajoTFDTO> listarPaginado(
+            Long maquinaId,
+            Long productoId,
+            String estadoStr,
+            LocalDate fDesde,
+            LocalDate fHasta,
+            Pageable pageable) {
+
+
+        EstadoOT_TF estado = null;
+        if (estadoStr != null && !estadoStr.isEmpty()) {
+            try {
+                estado = EstadoOT_TF.valueOf(estadoStr);
+            } catch (IllegalArgumentException e) {
+
+            }
+        }
+
+
+        LocalDateTime desde = (fDesde != null) ? fDesde.atStartOfDay() : null;
+        LocalDateTime hasta = (fHasta != null) ? fHasta.atTime(LocalTime.MAX) : null;
+
+
+        Page<OrdenTrabajoTF> page = otRepository.filtrarOrdenes(maquinaId, productoId, estado, desde, hasta, pageable);
+
+
+        return page.map(this::mapToDTO);
+    }
+
     @Override
     public List<OrdenTrabajoTFDTO> listarOrdenesPrioridad() {
         return otRepository.findAll(Sort.by(Sort.Direction.ASC, "prioridad"))

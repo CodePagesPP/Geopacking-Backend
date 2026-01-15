@@ -50,8 +50,19 @@ public class OrdenTrabajoTFController {
     }
 
     @GetMapping
-    public ResponseEntity<List<OrdenTrabajoTFDTO>> listarOrdenes() {
-        return new ResponseEntity<>(otService.listarOrdenes(), HttpStatus.OK);
+    public ResponseEntity<Page<OrdenTrabajoTFDTO>> listarOrdenes(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) Long maquinaId,
+            @RequestParam(required = false) Long productoId,
+            @RequestParam(required = false) String estado,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaDesde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaHasta
+    ) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+
+        return ResponseEntity.ok(otService.listarPaginado(maquinaId, productoId, estado, fechaDesde, fechaHasta, pageable));
     }
 
     @GetMapping("/ot")
