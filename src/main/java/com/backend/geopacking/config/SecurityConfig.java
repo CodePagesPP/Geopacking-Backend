@@ -55,7 +55,7 @@ public class SecurityConfig {
                                 "/orden-trabajo-tf/**",
                                 "/colors/**",
                                 "/origins/**",
-                                "/materials/**").hasAnyAuthority("OPERATOR_ACCESS","ADMIN_ACCESS")
+                                "/materials/**").hasAnyAuthority("OPERATOR_ACCESS","ADMIN_ACCESS","AYUDANTE_ACCESS")
                         .requestMatchers("/admin/**",
                                 "/rol/**",
                                 "/permission/**",
